@@ -5,101 +5,100 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>2026年度莞工之星</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft YaHei",sans-serif}
-html,body{height:100%;background:#f7f9f7}
-.container{max-width:100%;min-height:100%;margin:0 auto;padding:20px 15px;display:flex;flex-direction:column}
-.header{text-align:center;margin-bottom:20px}
-.logo{width:70px;height:70px;margin:0 auto 10px;object-fit:contain}
-.title{font-size:20px;font-weight:700;color:#00783a;margin-bottom:6px}
-.subtitle{text-align:center;color:#555;font-size:13px;margin-bottom:16px}
-.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;justify-content:center}
-.tab{padding:8px 10px;background:#eee;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap}
-.tab.active{background:#00783a;color:#fff}
-.card{background:#fff;border:1px solid #e0e6e0;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
-.avatar{width:70px;height:70px;border-radius:50%;object-fit:cover}
-.info{flex:1;min-width:0}
-.name{font-weight:700;font-size:16px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.desc{font-size:13px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vote-box{text-align:center;flex-shrink:0}
-.vote-btn{width:40px;height:40px;border-radius:50%;background:#aaa;color:#fff;border:none;cursor:pointer;font-size:11px}
-.vote-btn.voted{background:#00783a}
-.vote-count{margin-top:4px;font-size:12px;color:#00783a;font-weight:700}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:Microsoft Yahei,sans-serif;background:#f7f9f7}
+  .container{max-width:600px;margin:0 auto;padding:20px}
+  .logo{text-align:center;margin:20px 0}
+  .logo img{width:120px;height:120px;border-radius:50%}
+  h1{text-align:center;color:#008844;font-size:28px;margin-bottom:10px}
+  .subtitle{text-align:center;color:#666;margin-bottom:20px}
+  .btn-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px}
+  .category-btn{padding:8px 14px;border:none;border-radius:8px;background:#eee;font-size:14px}
+  .category-btn.active{background:#008844;color:#fff}
+  .card{background:#fff;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,.08)}
+  .avatar{width:50px;height:50px;background:#ddd;border-radius:50%}
+  .info{flex:1}
+  .info h3{font-size:16px;margin-bottom:4px}
+  .info p{font-size:13px;color:#666}
+  .vote-btn{padding:6px 10px;background:#008844;color:#fff;border:none;border-radius:6px}
+  .vote-btn:disabled{background:#999}
+  .vote-count{margin-left:8px;font-size:13px;color:#666}
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <img class="logo" src="./dgut-logo.png" alt="东莞理工学院Logo">
-    <div class="title">2026年度莞工之星</div>
+  <div class="logo"><img src="./dgut-logo.png" alt="莞工校徽"></div>
+  <h1>2026年度莞工之星</h1>
+  <p class="subtitle">实时投票 · 云端同步</p >
+
+  <div class="btn-bar">
+    <button class="category-btn active" onclick="show('自强之星')">自强之星</button>
+    <button class="category-btn" onclick="show('学术之星')">学术之星</button>
+    <button class="category-btn" onclick="show('文体之星')">文体之星</button>
+    <button class="category-btn" onclick="show('志愿之星')">志愿之星</button>
+    <button class="category-btn" onclick="show('团队之星')">团队之星</button>
   </div>
-  <div class="subtitle">五大类别 · 每类限投1次</div>
-  <div class="tabs" id="tabs"></div>
-  <div id="list" style="flex:1;overflow-y:auto"></div>
+
+  <div id="list"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script>
-const types = [
-  {key:"self",name:"自强之星"},
-  {key:"study",name:"学术之星"},
-  {key:"sport",name:"文体之星"},
-  {key:"volunteer",name:"志愿之星"},
-  {key:"team",name:"团队之星"}
-];
-let currentType = "self";
+// ====================== 已为你填好的 Supabase 信息 ======================
+const supabaseUrl = "https://xttxhcalqaqlwtufhmfji.supabase.co";
+const supabaseKey = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// ====================================================================
 
-function renderTabs(){
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = '';
-  types.forEach(t=>{
-    tabs.innerHTML += `<div class="tab ${currentType==t.key?'active':''}" onclick="switchType('${t.key}')">${t.name}</div>`;
-  });
+let currentCat = "自强之星";
+
+// 切换分类
+async function show(cat) {
+  currentCat = cat;
+  document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("active"));
+  [...document.querySelectorAll(".category-btn")].find(b => b.innerText === cat).classList.add("active");
+  await loadList(cat);
 }
 
-function switchType(t){
-  currentType = t;
-  renderTabs();
-  renderList();
+// 从云端加载候选人
+async function loadList(category) {
+  const { data } = await supabase
+    .from("candidates")
+    .select("*")
+    .eq("category", category);
+  render(data || []);
 }
 
-function renderList(){
-  const list = document.getElementById('list');
-  const all = JSON.parse(localStorage.getItem('voteData')||'[]');
-  const items = all.filter(it=>it.type==currentType);
-  list.innerHTML = '';
-  items.forEach((it)=>{
-    const voted = localStorage.getItem('voted_'+currentType) === it.id;
-    list.innerHTML += `
-    <div class="card">
-      <img class="avatar" src="${it.avatar}">
+// 渲染候选人列表
+function render(list) {
+  const box = document.getElementById("list");
+  box.innerHTML = "";
+  list.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="avatar"></div>
       <div class="info">
-        <div class="name">${it.name}</div>
-        <div class="desc">${it.desc}</div>
+        <h3>${item.name}</h3>
+        <p>${item.college}</p >
       </div>
-      <div class="vote-box">
-        <button class="vote-btn ${voted?'voted':''}" onclick="vote('${it.id}')">${voted?'已投':'投票'}</button>
-        <div class="vote-count">${it.count} 票</div>
+      <div>
+        <button class="vote-btn" onclick="doVote('${item.id}')">投票</button>
+        <span class="vote-count">${item.votes || 0}</span>
       </div>
-    </div>`;
+    `;
+    box.appendChild(card);
   });
 }
 
-function vote(id){
-  const all = JSON.parse(localStorage.getItem('voteData')||'[]');
-  const item = all.find(it=>it.id==id);
-  if(!item) return;
-  const key = 'voted_'+currentType;
-  if(localStorage.getItem(key)){
-    alert('该类别已投过！');
-    return;
-  }
-  item.count++;
-  localStorage.setItem('voteData',JSON.stringify(all));
-  localStorage.setItem(key, id);
-  renderList();
+// 真实投票：票数+1
+async function doVote(id) {
+  await supabase.rpc("increment_votes", { id });
+  loadList(currentCat);
 }
 
-renderTabs();
-renderList();
+// 初始加载
+show("自强之星");
 </script>
 </body>
 </html>
