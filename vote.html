@@ -3,35 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>莞工之星投票</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>2026年度莞工之星评选</title>
+<!-- 🔴 已替换为 unpkg CDN，不会被拦截 -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <style>
 :root { --green: #28a745; --light: #e8f5e9; }
 * { box-sizing: border-box; }
-body { font-family: "Microsoft YaHei", sans-serif; background: var(--light); margin: 0; padding: 15px; }
-.container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; }
-.header { text-align: center; padding-bottom: 15px; border-bottom: 2px solid var(--green); }
-.logo { width: 100px; }
-h1 { color: var(--green); font-size: 22px; margin: 10px 0 5px; }
-.tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
-.tab { padding: 8px 14px; border: 1px solid var(--green); color: var(--green); border-radius: 50px; background: white; cursor: pointer; font-size: 14px; }
-.tab.active, .tab:hover { background: var(--green); color: white; }
-.list { display: grid; grid-template-columns: 1fr; gap: 12px; }
-@media (min-width: 600px) { .list { grid-template-columns: 1fr 1fr; } }
-.card { padding: 16px; border: 1px solid #eee; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--green); }
-.info h3 { margin: 0 0 6px; font-size: 16px; }
-.tag { background: var(--green); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-right: 6px; }
-.vote-btn { background: var(--green); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
-.vote-btn:disabled { background: #ccc; }
-#status { text-align: center; padding: 10px; border-radius: 6px; margin: 10px 0; display: none; }
-.success { background: #d4edda; color: #155724; }
-.error { background: #f8d7da; color: #721c24; }
+body {
+  font-family: "Microsoft YaHei", sans-serif;
+  background: var(--light);
+  margin: 0;
+  padding: 15px;
+}
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+.header {
+  text-align: center;
+  padding-bottom: 15px;
+  border-bottom: 2px solid var(--green);
+}
+.logo {
+  width: 100px;
+}
+h1 {
+  color: var(--green);
+  font-size: 22px;
+  margin: 10px 0 5px;
+}
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 20px 0;
+}
+.tab {
+  padding: 8px 14px;
+  border: 1px solid var(--green);
+  color: var(--green);
+  border-radius: 50px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+.tab.active, .tab:hover {
+  background: var(--green);
+  color: white;
+}
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .list { grid-template-columns: 1fr 1fr; }
+}
+.card {
+  padding: 16px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid var(--green);
+}
+.info h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.tag {
+  background: var(--green);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-right: 6px;
+}
+.vote-btn {
+  background: var(--green);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.vote-btn:disabled {
+  background: #ccc;
+}
+#status {
+  text-align: center;
+  padding: 10px;
+  border-radius: 6px;
+  margin: 10px 0;
+  display: none;
+}
+.success {
+  background: #d4edda;
+  color: #155724;
+}
+.error {
+  background: #f8d7da;
+  color: #721c24;
+}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <img src="dgut-logo.png" class="logo" alt="Logo">
+    < img src="dgut-logo.png" class="logo" alt="Logo">
     <h1>2026年度莞工之星评选</h1>
   </div>
 
@@ -49,6 +134,7 @@ h1 { color: var(--green); font-size: 22px; margin: 10px 0 5px; }
 </div>
 
 <script>
+// 🔴 这里变量名改为 supabaseJs（小写 s），对应新 CDN
 const supabase = supabaseJs.createClient(
   "https://xttxhcalaqwtufhmfji.supabase.co",
   "sb_publishable_aXblcIYw2XZGSyNjUuh4mQ_o_e"
@@ -62,14 +148,21 @@ function getVotedIds() {
 }
 function markVoted(id) {
   const arr = getVotedIds();
-  if (!arr.includes(id)) { arr.push(id); localStorage.setItem(VOTED_KEY, JSON.stringify(arr)); }
+  if (!arr.includes(id)) {
+    arr.push(id);
+    localStorage.setItem(VOTED_KEY, JSON.stringify(arr));
+  }
 }
 
 async function loadList() {
   let query = supabase.from("candidates").select("*").order("votes", { ascending: false });
   if (currentCate !== "all") query = query.eq("category", currentCate);
+
   const { data, error } = await query;
-  if (error) { document.getElementById("list").innerHTML = "加载失败"; return; }
+  if (error) {
+    document.getElementById("list").innerHTML = "加载失败";
+    return;
+  }
 
   const voted = getVotedIds();
   document.getElementById("list").innerHTML = data.map(p => `
@@ -99,6 +192,7 @@ document.getElementById("list").addEventListener("click", async (e) => {
   if (!e.target.matches(".vote-btn")) return;
   const id = e.target.dataset.id;
   const btn = e.target;
+
   btn.disabled = true;
   btn.textContent = "投票中...";
 
