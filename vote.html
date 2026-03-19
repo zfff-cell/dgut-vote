@@ -3,102 +3,129 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2026年度莞工之星</title>
+<title>莞工之星投票</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:Microsoft Yahei,sans-serif;background:#f7f9f7}
-  .container{max-width:600px;margin:0 auto;padding:20px}
-  .logo{text-align:center;margin:20px 0}
-  .logo img{width:120px;height:120px;border-radius:50%}
-  h1{text-align:center;color:#008844;font-size:28px;margin-bottom:10px}
-  .subtitle{text-align:center;color:#666;margin-bottom:20px}
-  .btn-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px}
-  .category-btn{padding:8px 14px;border:none;border-radius:8px;background:#eee;font-size:14px}
-  .category-btn.active{background:#008844;color:#fff}
-  .card{background:#fff;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,.08)}
-  .avatar{width:50px;height:50px;background:#ddd;border-radius:50%}
-  .info{flex:1}
-  .info h3{font-size:16px;margin-bottom:4px}
-  .info p{font-size:13px;color:#666}
-  .vote-btn{padding:6px 10px;background:#008844;color:#fff;border:none;border-radius:6px}
-  .vote-btn:disabled{background:#999}
-  .vote-count{margin-left:8px;font-size:13px;color:#666}
+:root { --green: #28a745; --light: #e8f5e9; }
+* { box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", sans-serif; background: var(--light); margin: 0; padding: 15px; }
+.container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; }
+.header { text-align: center; padding-bottom: 15px; border-bottom: 2px solid var(--green); }
+.logo { width: 100px; }
+h1 { color: var(--green); font-size: 22px; margin: 10px 0 5px; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; }
+.tab { padding: 8px 14px; border: 1px solid var(--green); color: var(--green); border-radius: 50px; background: white; cursor: pointer; font-size: 14px; }
+.tab.active, .tab:hover { background: var(--green); color: white; }
+.list { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 600px) { .list { grid-template-columns: 1fr 1fr; } }
+.card { padding: 16px; border: 1px solid #eee; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--green); }
+.info h3 { margin: 0 0 6px; font-size: 16px; }
+.tag { background: var(--green); color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; margin-right: 6px; }
+.vote-btn { background: var(--green); color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.vote-btn:disabled { background: #ccc; }
+#status { text-align: center; padding: 10px; border-radius: 6px; margin: 10px 0; display: none; }
+.success { background: #d4edda; color: #155724; }
+.error { background: #f8d7da; color: #721c24; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="logo"><img src="./dgut-logo.png" alt="莞工校徽"></div>
-  <h1>2026年度莞工之星</h1>
-  <p class="subtitle">实时投票 · 云端同步</p >
-
-  <div class="btn-bar">
-    <button class="category-btn active" onclick="show('自强之星')">自强之星</button>
-    <button class="category-btn" onclick="show('学术之星')">学术之星</button>
-    <button class="category-btn" onclick="show('文体之星')">文体之星</button>
-    <button class="category-btn" onclick="show('志愿之星')">志愿之星</button>
-    <button class="category-btn" onclick="show('团队之星')">团队之星</button>
+  <div class="header">
+    <img src="dgut-logo.png" class="logo" alt="Logo">
+    <h1>2026年度莞工之星评选</h1>
   </div>
 
-  <div id="list"></div>
+  <div class="tabs">
+    <div class="tab active" data-cate="all">全部</div>
+    <div class="tab" data-cate="自强之星">自强之星</div>
+    <div class="tab" data-cate="志愿之星">志愿之星</div>
+    <div class="tab" data-cate="团队之星">团队之星</div>
+    <div class="tab" data-cate="学术之星">学术之星</div>
+    <div class="tab" data-cate="文体之星">文体之星</div>
+  </div>
+
+  <div id="status"></div>
+  <div id="list" class="list">加载中...</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script>
+const supabase = supabaseJs.createClient(
+  "https://xttxhcalaqwtufhmfji.supabase.co",
+  "sb_publishable_aXblcIYw2XZGSyNjUuh4mQ_o_e"
+);
 
-const supabaseUrl = "https://xttxhcalqaqlwtufhmfji.supabase.co";
-const supabaseKey = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+let currentCate = "all";
+const VOTED_KEY = "voted_ids";
 
-
-let currentCat = "自强之星";
-
-// 切换分类
-async function show(cat) {
-  currentCat = cat;
-  document.querySelectorAll(".category-btn").forEach(b => b.classList.remove("active"));
-  [...document.querySelectorAll(".category-btn")].find(b => b.innerText === cat).classList.add("active");
-  await loadList(cat);
+function getVotedIds() {
+  try { return JSON.parse(localStorage.getItem(VOTED_KEY)) || []; } catch (e) { return []; }
+}
+function markVoted(id) {
+  const arr = getVotedIds();
+  if (!arr.includes(id)) { arr.push(id); localStorage.setItem(VOTED_KEY, JSON.stringify(arr)); }
 }
 
-// 从云端加载候选人
-async function loadList(category) {
-  const { data } = await supabase
-    .from("candidates")
-    .select("*")
-    .eq("category", category);
-  render(data || []);
-}
+async function loadList() {
+  let query = supabase.from("candidates").select("*").order("votes", { ascending: false });
+  if (currentCate !== "all") query = query.eq("category", currentCate);
+  const { data, error } = await query;
+  if (error) { document.getElementById("list").innerHTML = "加载失败"; return; }
 
-// 渲染候选人列表
-function render(list) {
-  const box = document.getElementById("list");
-  box.innerHTML = "";
-  list.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div class="avatar"></div>
+  const voted = getVotedIds();
+  document.getElementById("list").innerHTML = data.map(p => `
+    <div class="card">
       <div class="info">
-        <h3>${item.name}</h3>
-        <p>${item.college}</p >
+        <h3>${p.name}</h3>
+        <div><span class="tag">${p.category}</span> ${p.college}</div>
+        <div style="margin-top:6px;font-weight:bold;color:var(--green)">票数：${p.votes || 0}</div>
       </div>
-      <div>
-        <button class="vote-btn" onclick="doVote('${item.id}')">投票</button>
-        <span class="vote-count">${item.votes || 0}</span>
-      </div>
-    `;
-    box.appendChild(card);
+      <button class="vote-btn" data-id="${p.id}" ${voted.includes(p.id) ? "disabled" : ""}>
+        ${voted.includes(p.id) ? "已投票" : "投一票"}
+      </button>
+    </div>
+  `).join("");
+}
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentCate = tab.dataset.cate;
+    loadList();
   });
+});
+
+document.getElementById("list").addEventListener("click", async (e) => {
+  if (!e.target.matches(".vote-btn")) return;
+  const id = e.target.dataset.id;
+  const btn = e.target;
+  btn.disabled = true;
+  btn.textContent = "投票中...";
+
+  const { error } = await supabase.rpc("increment_votes", { id });
+  if (error) {
+    showStatus("投票失败：" + error.message, "error");
+    btn.disabled = false;
+    btn.textContent = "投一票";
+    return;
+  }
+
+  markVoted(id);
+  btn.textContent = "✅已投票";
+  showStatus("投票成功！", "success");
+  loadList();
+});
+
+function showStatus(msg, type) {
+  const s = document.getElementById("status");
+  s.textContent = msg;
+  s.className = type;
+  s.style.display = "block";
+  setTimeout(() => s.style.display = "none", 2500);
 }
 
-// 真实投票：票数+1
-async function doVote(id) {
-  await supabase.rpc("increment_votes", { id });
-  loadList(currentCat);
-}
-
-// 初始加载
-show("自强之星");
+loadList();
+setInterval(loadList, 10000);
 </script>
 </body>
 </html>
