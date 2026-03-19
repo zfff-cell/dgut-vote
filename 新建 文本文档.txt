@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>莞工之星 - 投票系统</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:PingFang SC,Microsoft YaHei,sans-serif}
+body{background:#f5f7fa;padding:20px 15px}
+.container{max-width:500px;margin:0 auto;background:#fff;border-radius:20px;padding:30px 25px;box-shadow:0 8px 30px rgba(0,0,0,0.08)}
+.title{text-align:center;font-size:24px;font-weight:700;color:#1a2b48;margin-bottom:8px}
+.subtitle{text-align:center;color:#666;font-size:14px;margin-bottom:30px}
+.card{display:flex;align-items:center;gap:18px;padding:16px;border:1px solid #eee;border-radius:14px;margin-bottom:15px}
+.avatar{width:70px;height:70px;border-radius:50%;object-fit:cover;background:#f0f0f0}
+.info{flex:1}
+.name{font-size:17px;font-weight:600;color:#222;margin-bottom:4px}
+.desc{font-size:13px;color:#666}
+.vote-btn{background:#3a7dff;color:#fff;border:none;padding:10px 18px;border-radius:30px;font-size:14px;cursor:pointer}
+.vote-btn:disabled{background:#ccc}
+.result{margin-top:35px;padding-top:25px;border-top:1px solid #eee}
+.result-title{font-size:18px;font-weight:600;margin-bottom:15px;color:#1a2b48}
+.result-item{display:flex;justify-content:space-between;padding:8px 0;font-size:15px}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="title">东莞理工学院·莞工之星</div>
+<div class="subtitle">每人限投1次｜公平公正</div>
+
+<div class="card">
+< img class="avatar" src="https://picsum.photos/id/10/200/200">
+<div class="info"><div class="name">张三</div><div class="desc">计算机学院｜网技部</div></div>
+<button class="vote-btn" data-id="p1">投票</button>
+</div>
+
+<div class="card">
+< img class="avatar" src="https://picsum.photos/id/11/200/200">
+<div class="info"><div class="name">李四</div><div class="desc">计算机学院｜网技部</div></div>
+<button class="vote-btn" data-id="p2">投票</button>
+</div>
+
+<div class="card">
+< img class="avatar" src="https://picsum.photos/id/12/200/200">
+<div class="info"><div class="name">王五</div><div class="desc">计算机学院｜网技部</div></div>
+<button class="vote-btn" data-id="p3">投票</button>
+</div>
+
+<div class="result">
+<div class="result-title">实时投票结果</div>
+<div id="result"></div>
+</div>
+</div>
+
+<script>
+let votes = JSON.parse(localStorage.getItem('voteData')) || {p1:0,p2:0,p3:0};
+let voted = localStorage.getItem('hasVoted') === 'true';
+
+function updateResult(){
+document.getElementById('result').innerHTML = `
+<div class="result-item"><span>张三</span><span>${votes.p1} 票</span></div>
+<div class="result-item"><span>李四</span><span>${votes.p2} 票</span></div>
+<div class="result-item"><span>王五</span><span>${votes.p3} 票</span></div>
+`}
+
+function disableAll(){document.querySelectorAll('.vote-btn').forEach(b=>b.disabled=true)}
+if(voted) disableAll(); updateResult();
+
+document.querySelectorAll('.vote-btn').forEach(btn=>{
+btn.onclick = ()=>{
+if(voted) return;
+const id = btn.dataset.id; votes[id]++;
+localStorage.setItem('voteData',JSON.stringify(votes));
+localStorage.setItem('hasVoted','true');
+voted = true; disableAll(); updateResult();
+alert('投票成功！感谢参与～')
+}})
+</script>
+</body>
+</html>
