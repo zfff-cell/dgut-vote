@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026年度莞工之星</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft YaHei",sans-serif}
+html,body{height:100%;background:#f7f9f7}
+.container{max-width:100%;min-height:100%;margin:0 auto;padding:20px 15px;display:flex;flex-direction:column}
+.header{text-align:center;margin-bottom:20px}
+.logo{width:70px;height:70px;margin:0 auto 10px;object-fit:contain}
+.title{font-size:20px;font-weight:700;color:#00783a;margin-bottom:6px}
+.subtitle{text-align:center;color:#555;font-size:13px;margin-bottom:16px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;justify-content:center}
+.tab{padding:8px 10px;background:#eee;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap}
+.tab.active{background:#00783a;color:#fff}
+.card{background:#fff;border:1px solid #e0e6e0;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.avatar{width:70px;height:70px;border-radius:50%;object-fit:cover}
+.info{flex:1;min-width:0}
+.name{font-weight:700;font-size:16px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desc{font-size:13px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vote-box{text-align:center;flex-shrink:0}
+.vote-btn{width:40px;height:40px;border-radius:50%;background:#aaa;color:#fff;border:none;cursor:pointer;font-size:11px}
+.vote-btn.voted{background:#00783a}
+.vote-count{margin-top:4px;font-size:12px;color:#00783a;font-weight:700}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <img class="logo" src="https://picsum.photos/80/80?dgut" alt="东莞理工学院Logo">
+    <div class="title">2026年度莞工之星</div>
+  </div>
+  <div class="subtitle">五大类别 · 每类限投1次</div>
+  <div class="tabs" id="tabs"></div>
+  <div id="list" style="flex:1;overflow-y:auto"></div>
+</div>
+
+<script>
+const types = [
+  {key:"self",name:"自强之星"},
+  {key:"study",name:"学术之星"},
+  {key:"sport",name:"文体之星"},
+  {key:"volunteer",name:"志愿之星"},
+  {key:"team",name:"团队之星"}
+];
+let currentType = "self";
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  types.forEach(t=>{
+    tabs.innerHTML += `<div class="tab ${currentType==t.key?'active':''}" onclick="switchType('${t.key}')">${t.name}</div>`;
+  });
+}
+
+function switchType(t){
+  currentType = t;
+  renderTabs();
+  renderList();
+}
+
+function renderList(){
+  const list = document.getElementById('list');
+  const all = JSON.parse(localStorage.getItem('voteData')||'[]');
+  const items = all.filter(it=>it.type==currentType);
+  list.innerHTML = '';
+  items.forEach((it)=>{
+    const voted = localStorage.getItem('voted_'+currentType) === it.id;
+    list.innerHTML += `
+    <div class="card">
+      <img class="avatar" src="${it.avatar}">
+      <div class="info">
+        <div class="name">${it.name}</div>
+        <div class="desc">${it.desc}</div>
+      </div>
+      <div class="vote-box">
+        <button class="vote-btn ${voted?'voted':''}" onclick="vote('${it.id}')">${voted?'已投':'投票'}</button>
+        <div class="vote-count">${it.count} 票</div>
+      </div>
+    </div>`;
+  });
+}
+
+function vote(id){
+  const all = JSON.parse(localStorage.getItem('voteData')||'[]');
+  const item = all.find(it=>it.id==id);
+  if(!item) return;
+  const key = 'voted_'+currentType;
+  if(localStorage.getItem(key)){
+    alert('该类别已投过！');
+    return;
+  }
+  item.count++;
+  localStorage.setItem('voteData',JSON.stringify(all));
+  localStorage.setItem(key, id);
+  renderList();
+}
+
+renderTabs();
+renderList();
+</script>
+</body>
+</html>
+
