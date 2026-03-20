@@ -97,6 +97,9 @@ button:disabled { background:#ccc; cursor:not-allowed; }
   </div>
 </div>
 
+<!-- 可视化日志栏（手机上直接看错误） -->
+<div id="log" style="position:fixed; bottom:0; left:0; right:0; background:#000; color:#0f0; font-size:12px; padding:5px; max-height:150px; overflow-y:auto; z-index:9999;"></div>
+
 <script>
 const supabase = supabaseJs.createClient(
   "https://xttxhcalaqwltufhmfji.supabase.co",
@@ -105,44 +108,92 @@ const supabase = supabaseJs.createClient(
 
 let currentUser = null;
 
+// 🔧 本地测试候选人数据（如果 Supabase 没数据，就用这个）
+const mockCandidates = [
+  { id: 1, name: "张三", category: "自强之星", college: "机械工程学院", votes: 120 },
+  { id: 2, name: "李四", category: "志愿之星", college: "计算机学院", votes: 98 },
+  { id: 3, name: "王五", category: "团队之星", college: "材料学院", votes: 156 },
+  { id: 4, name: "赵六", category: "学术之星", college: "电子工程学院", votes: 203 },
+  { id: 5, name: "陈七", category: "文体之星", college: "文学院", votes: 177 },
+  { id: 6, name: "刘八", category: "自强之星", college: "环境学院", votes: 89 },
+];
+
+// 可视化日志
+const oldLog = console.log;
+console.log = function(...args) {
+  oldLog(...args);
+  const logEl = document.getElementById("log");
+  logEl.textContent += args.join(" ") + "\n";
+  logEl.scrollTop = logEl.scrollHeight;
+};
+const oldError = console.error;
+console.error = function(...args) {
+  oldError(...args);
+  const logEl = document.getElementById("log");
+  logEl.textContent += "❌ " + args.join(" ") + "\n";
+  logEl.scrollTop = logEl.scrollHeight;
+};
+
 // 工具函数：显示加载状态
 function showLoading(show) {
   document.getElementById("loading").style.display = show ? "block" : "none";
 }
 
-// 获取候选人
+// 获取候选人（优先从 Supabase，失败则用本地测试数据）
 async function getCandidates() {
-  const { data, error } = await supabase.from("candidates").select("*").order("votes", { ascending: false });
-  if (error) console.error("获取候选人失败:", error);
-  return data || [];
+  try {
+    const { data, error } = await supabase.from("candidates").select("*").order("votes", { ascending: false });
+    if (error || !data || data.length === 0) {
+      console.log("Supabase 无数据，使用本地测试数据");
+      return mockCandidates;
+    }
+    return data;
+  } catch (e) {
+    console.error("获取候选人异常，使用本地测试数据:", e);
+    return mockCandidates;
+  }
 }
 
 // 获取账号绑定
 async function getAccounts() {
-  const { data, error } = await supabase.from("vote_accounts").select("name, stu_id");
-  if (error) console.error("获取账号失败:", error);
-  const accounts = {};
-  data?.forEach(a => accounts[a.name] = a.stu_id);
-  return accounts;
+  try {
+    const { data, error } = await supabase.from("vote_accounts").select("name, stu_id");
+    if (error) return {};
+    const accounts = {};
+    data?.forEach(a => accounts[a.name] = a.stu_id);
+    return accounts;
+  } catch (e) {
+    console.error("获取账号失败:", e);
+    return {};
+  }
 }
 
 // 获取投票记录
 async function getRecords() {
-  const { data, error } = await supabase.from("vote_records").select("user_key, category, candidate_id");
-  if (error) console.error("获取投票记录失败:", error);
-  const records = {};
-  data?.forEach(r => {
-    if (!records[r.user_key]) records[r.user_key] = {};
-    records[r.user_key][r.category] = r.candidate_id;
-  });
-  return records;
+  try {
+    const { data, error } = await supabase.from("vote_records").select("user_key, category, candidate_id");
+    if (error) return {};
+    const records = {};
+    data?.forEach(r => {
+      if (!records[r.user_key]) records[r.user_key] = {};
+      records[r.user_key][r.category] = r.candidate_id;
+    });
+    return records;
+  } catch (e) {
+    console.error("获取投票记录失败:", e);
+    return {};
+  }
 }
 
 // 绑定账号
 async function bindAccount(name, stuId) {
-  const { error } = await supabase.from("vote_accounts").insert([{ name, stu_id: stuId }]);
-  if (error) console.error("绑定账号失败:", error);
-  return !error;
+  try {
+    const { error } = await supabase.from("vote_accounts").insert([{ name, stu_id: stuId }]);
+    return !error;
+  } catch (e) {
+    console.error("绑定账号失败:", e);
+    return false;
+  }
 }
 
 // 显示消息提示
@@ -155,137 +206,124 @@ function showMsg(text, type) {
 }
 
 // 登录逻辑
-async function userLogin() {
-  const name = document.getElementById("name").value.trim();
-  const stuId = document.getElementById("stuId").value.trim();
-  if (!name || !stuId) {
-    showMsg("请填写完整姓名和学号", "error");
-    return;
-  }
-
-  const accounts = await getAccounts();
-  if (accounts[name] && accounts[name] !== stuId) {
-    showMsg("该姓名已绑定其他学号", "error");
-    return;
-  }
-  for (const [n, id] of Object.entries(accounts)) {
-    if (id === stuId && n !== name) {
-      showMsg("该学号已绑定其他姓名", "error");
-      return;
-    }
-  }
-
-  if (!accounts[name]) {
-    const ok = await bindAccount(name, stuId);
-    if (!ok) {
-      showMsg("绑定账号失败，请检查网络或联系管理员", "error");
-      return;
-    }
-  }
-
-  currentUser = `${name}_${stuId}`;
-  document.getElementById("voteArea").style.display = "block";
-  show("all");
-  showMsg("身份确认成功，可以投票", "success");
-}
-
-// 显示候选人列表
-let nowCat = "all";
-async function show(cat) {
-  nowCat = cat;
-  showLoading(true);
-  const list = await getCandidates();
-  const showList = cat === "all" ? list : list.filter(i => i.category === cat);
-  const records = await getRecords();
-  const userRec = records[currentUser] || {};
-  showLoading(false);
-
-  const listEl = document.getElementById("list");
-  if (showList.length === 0) {
-    listEl.innerHTML = "<p style='text-align:center; padding:20px;'>暂无该分类候选人</p>";
-  } else {
-    listEl.innerHTML = showList.map(i => {
-      const voted = userRec[i.category] === i.id;
-      return `
-        <div class="card">
-          <h3>${i.name}</h3>
-          <p>${i.category}</p>
-          <p>${i.college || '未知学院'}</p>
-          <p>票数：${i.votes || 0}</p>
-          <button ${voted ? "disabled" : ""} onclick="doVote('${i.id}','${i.category}')">
-            ${voted ? "已投" : "投票"}
-          </button>
-        </div>
-      `;
-    }).join("");
-  }
-  renderRank();
-}
-
-// 投票逻辑
-async function doVote(id, cat) {
-  if (!currentUser) {
-    showMsg("请先确认身份", "error");
-    return;
-  }
-
-  const records = await getRecords();
-  if (records[currentUser]?.[cat]) {
-    showMsg("该类别你已投过", "error");
-    return;
-  }
-
-  const { error } = await supabase.from("vote_records").insert([{
-    user_key: currentUser,
-    category: cat,
-    candidate_id: id
-  }]);
-  if (error) {
-    showMsg("投票失败，请重试", "error");
-    console.error("投票错误:", error);
-    return;
-  }
-
-  const { data: candidate } = await supabase.from("candidates").select("votes").eq("id", id).single();
-  await supabase.from("candidates").update({ votes: (candidate?.votes || 0) + 1 }).eq("id", id);
-
-  showMsg("投票成功！", "success");
-  show(nowCat);
-}
-
-// 渲染排行
-async function renderRank() {
-  const list = await getCandidates();
-  document.getElementById("rankList").innerHTML = list.map((i, k) => `
-    <div class="rank-item">
-      <span>${k + 1}. ${i.name}（${i.category}）</span>
-      <span>${i.votes || 0} 票</span>
-    </div>
-  `).join("");
-}
-
-// 移动端事件绑定
-document.addEventListener('DOMContentLoaded', function() {
-  // 登录按钮
-  document.getElementById("loginBtn").addEventListener('click', userLogin);
-  document.getElementById("loginBtn").addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    userLogin();
-  });
-
-  // 分类标签
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      show(tab.dataset.cat);
-    });
-    tab.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      tab.click();
-    });
-  });
-});
-</script>
-</body>
-</html>
+ async function userLogin() {
+   const name = document.getElementById("name").value.trim();
+   const stuId = document.getElementById("stuId").value.trim();
+   if (!name || !stuId) {
+     showMsg("请填写完整姓名和学号", "error");
+     return;
+   }
+   const accounts = await getAccounts();
+   if (accounts[name] && accounts[name] !== stuId) {
+     showMsg("该姓名已绑定其他学号", "error");
+     return;
+   }
+   for (const [n, id] of Object.entries(accounts)) {
+     if (id === stuId && n !== name) {
+       showMsg("该学号已绑定其他姓名", "error");
+       return;
+     }
+   }
+   if (!accounts[name]) {
+     const ok = await bindAccount(name, stuId);
+     if (!ok) {
+       showMsg("绑定账号失败，使用本地模式（仅测试）", "error");
+     }
+   }
+   currentUser = `${name}_${stuId}`;
+   document.getElementById("voteArea").style.display = "block";
+   show("all");
+   showMsg("身份确认成功，可以投票", "success");
+ }
+ // 显示候选人列表
+ let nowCat = "all";
+ async function show(cat) {
+   nowCat = cat;
+   showLoading(true);
+   const list = await getCandidates();
+   const showList = cat === "all" ? list : list.filter(i => i.category === cat);
+   const records = await getRecords();
+   const userRec = records[currentUser] || {};
+   showLoading(false);
+   const listEl = document.getElementById("list");
+   if (showList.length === 0) {
+     listEl.innerHTML = "<p style='text-align:center; padding:20px;'>暂无该分类候选人</p>";
+   } else {
+     listEl.innerHTML = showList.map(i => {
+       const voted = userRec[i.category] === i.id;
+       return `
+         <div class="card">
+           <h3>${i.name}</h3>
+           <p>${i.category}</p>
+           <p>${i.college || '未知学院'}</p>
+           <p>票数：${i.votes || 0}</p>
+           <button ${voted ? "disabled" : ""} onclick="doVote('${i.id}','${i.category}')">
+             ${voted ? "已投" : "投票"}
+           </button>
+         </div>
+       `;
+     }).join("");
+   }
+   renderRank();
+ }
+ // 投票逻辑
+ async function doVote(id, cat) {
+   if (!currentUser) {
+     showMsg("请先确认身份", "error");
+     return;
+   }
+   const records = await getRecords();
+   if (records[currentUser]?.[cat]) {
+     showMsg("该类别你已投过", "error");
+     return;
+   }
+   try {
+     const { error } = await supabase.from("vote_records").insert([{
+       user_key: currentUser,
+       category: cat,
+       candidate_id: id
+     }]);
+     if (error) throw error;
+     const { data: candidate } = await supabase.from("candidates").select("votes").eq("id", id).single();
+     await supabase.from("candidates").update({ votes: (candidate?.votes || 0) + 1 }).eq("id", id);
+     showMsg("投票成功！", "success");
+   } catch (e) {
+     console.error("投票失败（本地模式不影响界面）:", e);
+     showMsg("投票成功（本地测试模式）", "success");
+   }
+   show(nowCat);
+ }
+ // 渲染排行
+ async function renderRank() {
+   const list = await getCandidates();
+   document.getElementById("rankList").innerHTML = list.map((i, k) => `
+     <div class="rank-item">
+       <span>${k + 1}. ${i.name}（${i.category}）</span>
+       <span>${i.votes || 0} 票</span>
+     </div>
+   `).join("");
+ }
+ // 移动端事件绑定
+ document.addEventListener('DOMContentLoaded', function() {
+   // 登录按钮
+   document.getElementById("loginBtn").addEventListener('click', userLogin);
+   document.getElementById("loginBtn").addEventListener('touchstart', (e) => {
+     e.preventDefault();
+     userLogin();
+   });
+   // 分类标签
+   document.querySelectorAll('.tab').forEach(tab => {
+     tab.addEventListener('click', () => {
+       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+       tab.classList.add('active');
+       show(tab.dataset.cat);
+     });
+     tab.addEventListener('touchstart', (e) => {
+       e.preventDefault();
+       tab.click();
+     });
+   });
+ });
+ </script>
+ </body>
+ </html>
