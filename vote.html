@@ -94,12 +94,12 @@ button:hover{background:#218838}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ===================== 已自动填入你的云配置 =====================
+// 已自动填入你的 Supabase 配置
 const SUPABASE_URL = "https://xttxhcalaqwltufhmfji.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
 
 const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
-const ADMIN_PWD = "123456";
+const ADMIN_PWD = "123456"; // 管理员密码
 
 let currentUser = null;
 let currentTab = "all";
@@ -113,7 +113,7 @@ function msg(text, cls) {
   setTimeout(() => s.style.display = "none", 2000);
 }
 
-// 登录
+// 用户登录
 function login() {
   const name = document.getElementById("name").value.trim();
   const stuId = document.getElementById("stuId").value.trim();
@@ -124,7 +124,7 @@ function login() {
   renderVote();
 }
 
-// 切换分类
+// 切换投票分类
 function tab(cat) {
   currentTab = cat;
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -132,7 +132,7 @@ function tab(cat) {
   renderVote();
 }
 
-// 渲染投票页
+// 渲染投票页面
 async function renderVote() {
   const { data: list } = await supabase.from("candidates").select("*");
   const arr = currentTab === "all" ? list : list.filter(i => i.category === currentTab);
@@ -147,26 +147,26 @@ async function renderVote() {
   `).join("");
 }
 
-// 投票
+// 执行投票
 async function doVote(cid) {
   if (!currentUser) return msg("请先登录", "error");
 
   const { data: has } = await supabase
     .from("records")
     .select("*")
-    .eq("user", currentUser)
+    .eq("user_key", currentUser)
     .eq("cid", cid);
 
   if (has.length > 0) return msg("你已投过此人", "error");
 
-  await supabase.from("records").insert([{ user: currentUser, cid }]);
+  await supabase.from("records").insert([{ user_key: currentUser, cid }]);
   await supabase.rpc("inc_vote", { cid });
 
   msg("投票成功", "success");
   renderVote();
 }
 
-// 显示后台
+// 显示管理员后台
 function showAdmin() {
   const p = document.getElementById("adminPwd").value;
   if (p !== ADMIN_PWD) return msg("密码错误", "error");
@@ -175,7 +175,7 @@ function showAdmin() {
   renderAdmin();
 }
 
-// 渲染后台
+// 渲染管理员后台
 async function renderAdmin() {
   const { data: candidates } = await supabase.from("candidates").select("*");
   const { data: records } = await supabase.from("records").select("*");
@@ -205,7 +205,7 @@ async function renderAdmin() {
 
   // 投票记录
   document.getElementById("rList").innerHTML = records.map(r => `
-     <div class="row"><span>${r.user}</span><span>${r.time}</span></div>
+     <div class="row"><span>${r.user_key}</span><span>${r.time}</span></div>
    `).join("");
  }
  // 添加候选人
@@ -226,7 +226,7 @@ async function renderAdmin() {
    renderAdmin();
    renderVote();
  }
- // 重置票数
+ // 一键重置所有票数
  async function resetAllVotes() {
    if (!confirm("确定重置所有票数？")) return;
    const { data: list } = await supabase.from("candidates").select("id");
@@ -236,7 +236,7 @@ async function renderAdmin() {
    renderAdmin();
    renderVote();
  }
- // 导出 Excel
+ // 导出 Excel（CSV 格式）
  async function exportExcel() {
    const { data: list } = await supabase.from("candidates").select("*");
    list.sort((a, b) => b.votes - a.votes);
@@ -250,13 +250,14 @@ async function renderAdmin() {
    a.download = "莞工之星投票结果.csv";
    a.click();
  }
- // 清空所有
+ // 清空所有数据
  async function clearAll() {
    if (!confirm("确定清空所有数据？不可恢复！")) return;
    await supabase.from("records").delete().neq("id", 0);
    await supabase.from("candidates").delete().neq("id", 0);
    location.reload();
  }
+ // 初始化页面
  renderVote();
  </script>
  </body>
