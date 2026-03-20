@@ -3,223 +3,203 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2026年度莞工之星评选</title>
-<!-- 🔴 已替换为 unpkg CDN，不会被拦截 -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<title>莞工之星 - 投票系统</title>
 <style>
-:root { --green: #28a745; --light: #e8f5e9; }
-* { box-sizing: border-box; }
-body {
-  font-family: "Microsoft YaHei", sans-serif;
-  background: var(--light);
-  margin: 0;
-  padding: 15px;
-}
-.container {
-  max-width: 1000px;
-  margin: 0 auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-.header {
-  text-align: center;
-  padding-bottom: 15px;
-  border-bottom: 2px solid var(--green);
-}
-.logo {
-  width: 100px;
-}
-h1 {
-  color: var(--green);
-  font-size: 22px;
-  margin: 10px 0 5px;
-}
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
-  margin: 20px 0;
-}
-.tab {
-  padding: 8px 14px;
-  border: 1px solid var(--green);
-  color: var(--green);
-  border-radius: 50px;
-  background: white;
-  cursor: pointer;
-  font-size: 14px;
-}
-.tab.active, .tab:hover {
-  background: var(--green);
-  color: white;
-}
-.list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-@media (min-width: 600px) {
-  .list { grid-template-columns: 1fr 1fr; }
-}
-.card {
-  padding: 16px;
-  border: 1px solid #eee;
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-left: 4px solid var(--green);
-}
-.info h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-}
-.tag {
-  background: var(--green);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 12px;
-  margin-right: 6px;
-}
-.vote-btn {
-  background: var(--green);
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.vote-btn:disabled {
-  background: #ccc;
-}
-#status {
-  text-align: center;
-  padding: 10px;
-  border-radius: 6px;
-  margin: 10px 0;
-  display: none;
-}
-.success {
-  background: #d4edda;
-  color: #155724;
-}
-.error {
-  background: #f8d7da;
-  color: #721c24;
-}
+:root { --green:#28a745; --light:#e8f5e9; --dark:#1e7e34; --red:#dc3545; }
+* { box-sizing:border-box; margin:0; padding:0; font-family:"Microsoft YaHei",sans-serif; }
+body { background:var(--light); padding:15px; }
+.container { max-width:900px; margin:0 auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+.header { text-align:center; padding-bottom:15px; border-bottom:2px solid var(--green); }
+.logo { width:80px; margin-bottom:10px; }
+h1 { color:var(--green); font-size:22px; margin:10px 0 5px; }
+.login-box { margin:20px 0; text-align:center; }
+input { padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; margin:5px; width:180px; }
+button { padding:10px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; background:var(--green); color:white; margin:5px; }
+button:disabled { background:#ccc; cursor:not-allowed; }
+.tab-group { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; justify-content:center; }
+.tab { padding:8px 14px; border:1px solid var(--green); border-radius:20px; background:white; color:var(--green); cursor:pointer; }
+.tab.active { background:var(--green); color:white; }
+.list { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:15px; margin:20px 0; }
+.card { border:1px solid #ddd; border-radius:8px; padding:15px; text-align:center; }
+.card h3 { margin-bottom:6px; font-size:17px; }
+.card p { color:#666; font-size:14px; margin-bottom:8px; }
+#status { text-align:center; padding:10px; border-radius:6px; margin:10px 0; display:none; }
+.success { background:#d4edda; color:#155724; }
+.error { background:#f8d7da; color:#721c24; }
+.rank { margin-top:30px; padding-top:20px; border-top:2px solid var(--light); }
+.rank h2 { color:var(--green); text-align:center; margin-bottom:15px; font-size:20px; }
+.rank-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <img src="dgut-logo.png" class="logo" alt="Logo">
-    <h1>2026年度莞工之星评选</h1>
-  </div>
-
-  <div class="tabs">
-    <div class="tab active" data-cate="all">全部</div>
-    <div class="tab" data-cate="自强之星">自强之星</div>
-    <div class="tab" data-cate="志愿之星">志愿之星</div>
-    <div class="tab" data-cate="团队之星">团队之星</div>
-    <div class="tab" data-cate="学术之星">学术之星</div>
-    <div class="tab" data-cate="文体之星">文体之星</div>
+    <!-- 校徽 Logo 已加入 -->
+    <img src="./logo-dgut.png
+      " class="logo" alt="东莞理工学院校徽">
+    <h1>莞工之星 · 投票系统</h1>
+    <p>一个姓名只能对应一个学号，每个类别限投1次</p>
   </div>
 
   <div id="status"></div>
-  <div id="list" class="list">加载中...</div>
+
+  <div class="login-box">
+    <input id="name" placeholder="姓名">
+    <input id="stuId" placeholder="学号" type="number">
+    <button onclick="userLogin()">确认身份</button>
+  </div>
+
+  <div id="voteArea" style="display:none;">
+    <div class="tab-group">
+      <button class="tab active" onclick="show('all')">全部</button>
+      <button class="tab" onclick="show('自强之星')">自强之星</button>
+      <button class="tab" onclick="show('志愿之星')">志愿之星</button>
+      <button class="tab" onclick="show('团队之星')">团队之星</button>
+      <button class="tab" onclick="show('学术之星')">学术之星</button>
+      <button class="tab" onclick="show('文体之星')">文体之星</button>
+    </div>
+
+    <div class="list" id="list"></div>
+
+    <div class="rank">
+      <h2>实时票数排行</h2>
+      <div id="rankList"></div>
+    </div>
+  </div>
 </div>
 
 <script>
-// 🔴 这里变量名改为 supabaseJs（小写 s），对应新 CDN
-const supabase = supabaseJs.createClient(
-  "https://xttxhcalaqwtufhmfji.supabase.co",
-  "sb_publishable_aXblcIYw2XZGSyNjUuh4mQ_o_e"
-);
-
-let currentCate = "all";
-const VOTED_KEY = "voted_ids";
-
-function getVotedIds() {
-  try { return JSON.parse(localStorage.getItem(VOTED_KEY)) || []; } catch (e) { return []; }
+// ====================== 候选人数据 ======================
+function getCandidates() {
+  const d = localStorage.getItem("dgut_candidates");
+  return d ? JSON.parse(d) : [];
 }
-function markVoted(id) {
-  const arr = getVotedIds();
-  if (!arr.includes(id)) {
-    arr.push(id);
-    localStorage.setItem(VOTED_KEY, JSON.stringify(arr));
-  }
+function saveCandidates(arr) {
+  localStorage.setItem("dgut_candidates", JSON.stringify(arr));
 }
 
-async function loadList() {
-  let query = supabase.from("candidates").select("*").order("votes", { ascending: false });
-  if (currentCate !== "all") query = query.eq("category", currentCate);
+// ====================== 账号绑定与投票记录 ======================
+function getAccounts() {
+  const d = localStorage.getItem("vote_accounts");
+  return d ? JSON.parse(d) : {}; // 结构: { "姓名": "学号", ... }
+}
+function getRecords() {
+  const d = localStorage.getItem("vote_records");
+  return d ? JSON.parse(d) : {}; // 结构: { "姓名_学号": { "类别": "候选人id", ... }, ... }
+}
 
-  const { data, error } = await query;
-  if (error) {
-    document.getElementById("list").innerHTML = "加载失败";
+// ====================== 登录校验 ======================
+let currentUser = null;
+function userLogin() {
+  const name = document.getElementById("name").value.trim();
+  const stuId = document.getElementById("stuId").value.trim();
+  if (!name || !stuId) {
+    showMsg("请填写完整姓名和学号", "error");
     return;
   }
 
-  const voted = getVotedIds();
-  document.getElementById("list").innerHTML = data.map(p => `
-    <div class="card">
-      <div class="info">
-        <h3>${p.name}</h3>
-        <div><span class="tag">${p.category}</span> ${p.college}</div>
-        <div style="margin-top:6px;font-weight:bold;color:var(--green)">票数：${p.votes || 0}</div>
+  const accounts = getAccounts();
+  // 1. 检查姓名是否已绑定其他学号
+  if (accounts[name] && accounts[name] !== stuId) {
+    showMsg("该姓名已绑定其他学号，无法使用当前学号投票", "error");
+    return;
+  }
+  // 2. 检查学号是否已绑定其他姓名
+  for (const [existName, existId] of Object.entries(accounts)) {
+    if (existId === stuId && existName !== name) {
+      showMsg("该学号已绑定其他姓名，无法使用当前姓名投票", "error");
+      return;
+    }
+  }
+
+  // 3. 绑定新账号
+  if (!accounts[name]) {
+    accounts[name] = stuId;
+    localStorage.setItem("vote_accounts", JSON.stringify(accounts));
+  }
+
+  currentUser = `${name}_${stuId}`;
+  document.getElementById("voteArea").style.display = "block";
+  show("all");
+  showMsg("身份确认成功，可以开始投票", "success");
+}
+
+// ====================== 展示候选人 ======================
+let nowCat = "all";
+function show(cat) {
+  nowCat = cat;
+  const list = getCandidates();
+  const showList = cat === "all" ? list : list.filter(i => i.category === cat);
+  const records = getRecords();
+  const userRec = records[currentUser] || {};
+
+  document.getElementById("list").innerHTML = showList.map(i => {
+    const voted = userRec[i.category] === i.id;
+    return `
+      <div class="card">
+        <h3>${i.name}</h3>
+        <p>${i.category}</p>
+        <p>${i.college}</p>
+        <p>票数：${i.votes || 0}</p>
+        <button ${voted?"disabled":""} onclick="doVote('${i.id}','${i.category}')">
+          ${voted?"已投":"投票"}
+        </button>
       </div>
-      <button class="vote-btn" data-id="${p.id}" ${voted.includes(p.id) ? "disabled" : ""}>
-        ${voted.includes(p.id) ? "已投票" : "投一票"}
-      </button>
+    `;
+  }).join("");
+
+  renderRank();
+}
+
+// ====================== 投票核心逻辑 ======================
+function doVote(id, cat) {
+  if (!currentUser) {
+    showMsg("请先确认身份", "error");
+    return;
+  }
+
+  const records = getRecords();
+  if (!records[currentUser]) records[currentUser] = {};
+
+  // 同一类别已投过 → 禁止
+  if (records[currentUser][cat]) {
+    showMsg("该类别你已投过，不能重复投票", "error");
+    return;
+  }
+
+  // 执行投票
+  const list = getCandidates();
+  const item = list.find(x => x.id === id);
+  if (!item) return;
+  item.votes = (item.votes || 0) + 1;
+  saveCandidates(list);
+
+  // 记录投票
+  records[currentUser][cat] = id;
+  localStorage.setItem("vote_records", JSON.stringify(records));
+
+  showMsg("投票成功！", "success");
+  show(nowCat);
+}
+
+// ====================== 渲染排行 ======================
+function renderRank() {
+  const list = getCandidates().sort((a,b)=>(b.votes||0)-(a.votes||0));
+  document.getElementById("rankList").innerHTML = list.map((i,k)=>`
+    <div class="rank-item">
+      <span>${k+1}. ${i.name}（${i.category}）</span>
+      <span>${i.votes||0} 票</span>
     </div>
   `).join("");
 }
 
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-    currentCate = tab.dataset.cate;
-    loadList();
-  });
-});
-
-document.getElementById("list").addEventListener("click", async (e) => {
-  if (!e.target.matches(".vote-btn")) return;
-  const id = e.target.dataset.id;
-  const btn = e.target;
-
-  btn.disabled = true;
-  btn.textContent = "投票中...";
-
-  const { error } = await supabase.rpc("increment_votes", { id });
-  if (error) {
-    showStatus("投票失败：" + error.message, "error");
-    btn.disabled = false;
-    btn.textContent = "投一票";
-    return;
-  }
-
-  markVoted(id);
-  btn.textContent = "✅已投票";
-  showStatus("投票成功！", "success");
-  loadList();
-});
-
-function showStatus(msg, type) {
+function showMsg(text, type) {
   const s = document.getElementById("status");
-  s.textContent = msg;
+  s.textContent = text;
   s.className = type;
   s.style.display = "block";
-  setTimeout(() => s.style.display = "none", 2500);
+  setTimeout(()=>s.style.display="none",2500);
 }
-
-loadList();
-setInterval(loadList, 10000);
 </script>
 </body>
 </html>
