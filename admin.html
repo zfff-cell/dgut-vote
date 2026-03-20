@@ -3,193 +3,212 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2026年度莞工之星-后台</title>
+<title>莞工之星 - 管理员后台</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:"Microsoft YaHei",sans-serif}
-html,body{height:100%;background:#f7f9f7}
-.login-box{background:#fff;padding:25px;border-radius:14px;max-width:320px;margin:40px auto;text-align:center}
-.login-box .logo{width:55px;height:55px;margin:0 auto 10px;object-fit:contain}
-.login-box input{width:100%;padding:10px;margin:8px 0;border:1px solid #ddd;border-radius:8px;text-align:center;font-size:15px}
-.login-box button{width:100%;padding:10px;background:#00783a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:15px}
-.container{max-width:100%;min-height:100%;margin:0 auto;padding:20px 15px;display:flex;flex-direction:column}
-.header{text-align:center;margin-bottom:20px}
-.header .logo{width:55px;height:55px;margin:0 auto 10px;object-fit:contain}
-.title{font-size:20px;font-weight:700;color:#00783a;margin-bottom:6px}
-.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;justify-content:center}
-.tab{padding:8px 10px;background:#eee;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap}
-.tab.active{background:#00783a;color:#fff}
-.btn-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
-.btn-bar button{flex:1;min-width:80px;padding:10px;border:none;border-radius:10px;background:#00783a;color:#fff;cursor:pointer;font-size:14px}
-.card{background:#fff;border:1px solid #e0e6e0;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;position:relative}
-.avatar{width:60px;height:60px;border-radius:50%;object-fit:cover;cursor:pointer}
-.info{flex:1;min-width:0}
-input{width:100%;border:1px solid #ddd;border-radius:6px;padding:5px;margin-bottom:5px;font-size:13px}
-.count-box{display:flex;align-items:center;gap:5px;font-size:13px}
-.count-box button{padding:3px 6px;background:#00783a;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px}
-.del{position:absolute;top:8px;right:8px;background:#ff4d4f;color:#fff;border:none;border-radius:4px;padding:2px 5px;cursor:pointer;font-size:11px}
-.file-input{display:none}
+:root { --green: #28a745; --light: #e8f5e9; --dark: #1e7e34; --red: #dc3545; }
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: "Microsoft YaHei", sans-serif; }
+body { background: var(--light); padding: 15px; }
+.container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.header { text-align: center; padding-bottom: 15px; border-bottom: 2px solid var(--green); }
+.logo { width:80px; margin-bottom:10px; }
+h1 { color: var(--green); font-size: 22px; margin: 10px 0 5px; }
+.login-box { text-align: center; margin: 60px 0; }
+input { padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc; margin: 5px; width: 220px; }
+button { padding: 10px 20px; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; background: var(--green); color: white; margin: 5px; }
+button:hover { background: var(--dark); }
+button.danger { background: var(--red); }
+.btn-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0; justify-content: center; }
+.table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.table th, .table td { border: 1px solid #ddd; padding: 10px; text-align: center; font-size: 14px; }
+.table th { background: var(--light); color: var(--green); }
+#status { text-align: center; padding: 10px; border-radius: 6px; margin: 10px 0; display: none; }
+.success { background: #d4edda; color: #155724; }
+.error { background: #f8d7da; color: #721c24; }
+.add-form { background: var(--light); padding: 15px; border-radius: 8px; margin: 20px 0; }
+.add-form h3 { margin-top: 0; color: var(--green); margin-bottom: 10px; }
 </style>
 </head>
 <body>
+<div class="container">
+  <div class="header">
+    <img src="./dgut-logo.png" class="logo" alt="东莞理工学院校徽">
+    <h1>莞工之星 · 管理员后台</h1>
+  </div>
+  <div id="status"></div>
 
-<div id="loginPage" class="login-box">
-  <img class="logo" src="./dgut-logo.png" alt="东莞理工学院 Logo">
-  <div class="title">管理后台登录</div>
-  <input type="password" id="pwd" placeholder="请输入密码" autocomplete="off">
-  <button onclick="login()">登录</button>
-</div>
+  <div id="loginPanel" class="login-box">
+    <h3>管理员登录</h3>
+    <input type="password" id="adminPwd" placeholder="密码">
+    <button id="loginBtn">登录</button>
+  </div>
 
-<div id="adminPage" style="display:none;flex:1;flex-direction:column">
-  <div class="container">
-    <div class="header">
-      <img class="logo" src="./dgut-logo.png" alt="东莞理工学院Logo">
-      <div class="title">2026年度莞工之星 · 管理后台</div>
+  <div id="adminPanel" style="display:none;">
+    <div class="btn-group">
+      <button id="refreshBtn">🔄 刷新</button>
+      <button id="clearVotesBtn">🗑️ 清空票数</button>
+      <button id="exportBtn">📊 导出 Excel</button>
+      <button id="toggleAddFormBtn">➕ 新增候选人</button>
     </div>
-    <div class="tabs" id="tabs"></div>
-    <div class="btn-bar">
-      <button onclick="addItem()">+ 添加选手</button>
-      <button onclick="exportData()">导出Excel</button>
-      <button onclick="resetAll()">重置投票</button>
+
+    <div id="addForm" class="add-form" style="display:none;">
+      <h3>新增候选人</h3>
+      <input type="text" id="newName" placeholder="姓名">
+      <input type="text" id="newCollege" placeholder="学院">
+      <select id="newCategory">
+        <option value="自强之星">自强之星</option>
+        <option value="志愿之星">志愿之星</option>
+        <option value="团队之星">团队之星</option>
+        <option value="学术之星">学术之星</option>
+        <option value="文体之星">文体之星</option>
+      </select>
+      <button id="addCandidateBtn">提交</button>
     </div>
-    <div id="list" style="flex:1;overflow-y:auto"></div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>姓名</th><th>类别</th><th>学院</th><th>票数</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
   </div>
 </div>
 
-<input type="file" class="file-input" id="fileInput" accept="image/*">
+<!-- 先引入 SDK 和 XLSX -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-const ADMIN_PASSWORD = "123456";
-const types = [
-  {key:"self",name:"自强之星"},
-  {key:"study",name:"学术之星"},
-  {key:"sport",name:"文体之星"},
-  {key:"volunteer",name:"志愿之星"},
-  {key:"team",name:"团队之星"}
-];
-let currentType = "self";
-let editImgId = null;
+// 等待页面完全加载后再执行，确保 supabaseJs 已存在
+window.addEventListener('load', function() {
+  const dgutAdminSupabase = supabaseJs.createClient(
+    "https://xttxhcalaqwltufhmfji.supabase.co",
+    "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD"
+  );
+  const ADMIN_PASSWORD = "123456";
 
-function login(){
-  if(document.getElementById('pwd').value===ADMIN_PASSWORD){
-    document.getElementById('loginPage').style.display="none";
-    document.getElementById('adminPage').style.display="flex";
-    initData();
-    render();
-  }else alert("密码错误");
-}
-
-function initData(){
-  if(!localStorage.getItem('voteData')){
-    localStorage.setItem('voteData',JSON.stringify([
-      {id:"s1",type:"self",name:"自强候选人1",desc:"计算机学院 | 网技部",avatar:"https://picsum.photos/80?1",count:0},
-      {id:"st1",type:"study",name:"学术候选人1",desc:"计算机学院 | 网技部",avatar:"https://picsum.photos/80?2",count:0}
-    ]));
+  async function getCandidates() {
+    const { data } = await dgutAdminSupabase.from("candidates").select("*").order("votes", { ascending: false });
+    return data || [];
   }
-}
 
-function renderTabs(){
-  const t = document.getElementById('tabs');
-  t.innerHTML = '';
-  types.forEach(x=>{
-    t.innerHTML+=`<div class="tab ${currentType==x.key?'active':''}" onclick="switchType('${x.key}')">${x.name}</div>`;
-  });
-}
-
-function switchType(k){
-  currentType=k; renderTabs(); render();
-}
-
-function render(){
-  const all = JSON.parse(localStorage.getItem('voteData'));
-  const list = document.getElementById('list');
-  list.innerHTML = '';
-  all.filter(it=>it.type==currentType).forEach(it=>{
-    list.innerHTML+=`
-    <div class="card">
-      <img class="avatar" src="${it.avatar}" onclick="pickImg('${it.id}')">
-      <div class="info">
-        <input value="${it.name}" oninput="save('${it.id}','name',this.value)">
-        <input value="${it.desc}" oninput="save('${it.id}','desc',this.value)">
-        <div class="count-box">
-          <span>票数：${it.count}</span>
-          <button onclick="setCount('${it.id}')">修改</button>
-        </div>
-      </div>
-      <button class="del" onclick="del('${it.id}')">删除</button>
-    </div>`;
-  });
-}
-
-function save(id,k,v){
-  const a=JSON.parse(localStorage.getItem('voteData'));
-  const i=a.findIndex(x=>x.id==id);
-  if(i>=0) a[i][k]=v;
-  localStorage.setItem('voteData',JSON.stringify(a));
-}
-
-function pickImg(id){ editImgId=id; document.getElementById('fileInput').click(); }
-document.getElementById('fileInput').addEventListener('change',e=>{
-  const f=e.target.files[0]; if(!f)return;
-  const u=URL.createObjectURL(f);
-  const a=JSON.parse(localStorage.getItem('voteData'));
-  const i=a.findIndex(x=>x.id==editImgId);
-  a[i].avatar=u;
-  localStorage.setItem('voteData',JSON.stringify(a));
-  render();
-});
-
-function addItem(){
-  const a=JSON.parse(localStorage.getItem('voteData'));
-  a.push({
-    id:Date.now().toString(),
-    type:currentType,
-    name:"新选手",
-    desc:"学院 | 部门",
-    avatar:"https://picsum.photos/80?"+Math.random(),
-    count:0
-  });
-  localStorage.setItem('voteData',JSON.stringify(a));
-  render();
-}
-
-function del(id){
-  if(!confirm("确定删除？"))return;
-  const a=JSON.parse(localStorage.getItem('voteData'));
-  localStorage.setItem('voteData',JSON.stringify(a.filter(x=>x.id!=id)));
-  render();
-}
-
-function setCount(id){
-  const n=prompt("请输入票数：");
-  if(!n||isNaN(n))return;
-  const a=JSON.parse(localStorage.getItem('voteData'));
-  const i=a.findIndex(x=>x.id==id);
-  a[i].count=parseInt(n);
-  localStorage.setItem('voteData',JSON.stringify(a));
-  render();
-}
-
-function resetAll(){
-  if(confirm("确定重置所有投票记录？")){
-    types.forEach(t=>localStorage.removeItem('voted_'+t.key));
-    alert("已重置所有投票状态");
+  async function refreshTable() {
+    const list = await getCandidates();
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = list.map(p=>`
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.category}</td>
+        <td>${p.college}</td>
+        <td>${p.votes||0}</td>
+        <td>
+          <button class="edit" data-id="${p.id}">修改</button>
+          <button class="del" data-id="${p.id}">删除</button>
+        </td>
+      </tr>
+    `).join("");
   }
-}
 
-function exportData(){
-  const a=JSON.parse(localStorage.getItem('voteData'));
-  let csv="类别,姓名,学院部门,票数\n";
-  const typeName={self:"自强之星",study:"学术之星",sport:"文体之星",volunteer:"志愿之星",team:"团队之星"};
-  a.forEach(it=>{
-    csv+=`${typeName[it.type]},${it.name},${it.desc},${it.count}\n`;
-  });
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const aTag=document.createElement('a');
-    aTag.href=URL.createObjectURL(blob);
-    aTag.download="2026莞工之星投票结果.csv";
-    aTag.click();
-}
-renderTabs();
-</script>
-</body>
-</html>
+  async function login() {
+    const p = document.getElementById("adminPwd").value;
+    if (p === ADMIN_PASSWORD) {
+      document.getElementById("loginPanel").style.display = "none";
+      document.getElementById("adminPanel").style.display = "block";
+      await refreshTable();
+      showStatus("登录成功", "success");
+    } else {
+      showStatus("密码错误", "error");
+    }
+  }
+
+  async function addCandidate() {
+    const n = document.getElementById("newName").value.trim();
+    const c = document.getElementById("newCollege").value.trim();
+    const t = document.getElementById("newCategory").value;
+    if(!n||!c){showStatus("请填写完整","error");return;}
+    const { error } = await dgutAdminSupabase.from("candidates").insert([{ name:n, college:c, category:t, votes:0 }]);
+    if(error){showStatus("添加失败","error");return;}
+    await refreshTable();
+    showStatus("添加成功","success");
+    toggleAddForm();
+  }
+
+  function toggleAddForm(){
+    const f=document.getElementById("addForm");
+    f.style.display=f.style.display=="none"?"block":"none";
+  }
+
+  async function edit(id){
+    const { data: it } = await dgutAdminSupabase.from("candidates").select("votes").eq("id", id).single();
+    const v=prompt("新票数：",it?.votes||0);
+    if(v==null||isNaN(v)||v<0)return;
+    const { error } = await dgutAdminSupabase.from("candidates").update({ votes: parseInt(v) }).eq("id", id);
+    if(error){showStatus("修改失败","error");return;}
+    await refreshTable();
+    showStatus("修改成功","success");
+  }
+
+  async function del(id){
+    if(!confirm("确定删除？"))return;
+    const { error } = await dgutAdminSupabase.from("candidates").delete().eq("id", id);
+    if(error){showStatus("删除失败","error");return;}
+    await refreshTable();
+    showStatus("删除成功","success");
+  }
+
+  async function clearVotes() {
+    if(!confirm("确定清空所有票数？")) return;
+    const { error } = await dgutAdminSupabase.from("candidates").update({ votes: 0 });
+    if(error){showStatus("清空失败","error");return;}
+    await refreshTable();
+    showStatus("已清空","success");
+  }
+
+  async function exportExcel() {
+    const candidates = await getCandidates();
+    const { data: accounts } = await dgutAdminSupabase.from("vote_accounts").select("name, stu_id");
+    const { data: records } = await dgutAdminSupabase.from("vote_records").select("user_key, category, candidate_id");
+
+    const wb = XLSX.utils.book_new();
+    const candidateSheet = XLSX.utils.json_to_sheet(candidates.map(c => ({
+      姓名: c.name,
+      类别: c.category,
+      学院: c.college,
+      票数: c.votes
+    })));
+    XLSX.utils.book_append_sheet(wb, candidateSheet, "候选人");
+    const accountSheet = XLSX.utils.json_to_sheet(accounts?.map(a => ({
+       姓名: a.name,
+       学号: a.stu_id
+     })) || []);
+     XLSX.utils.book_append_sheet(wb, accountSheet, "账号");
+     const recordSheet = XLSX.utils.json_to_sheet(records?.map(r => ({
+       用户: r.user_key,
+       类别: r.category,
+       候选人ID: r.candidate_id
+     })) || []);
+     XLSX.utils.book_append_sheet(wb, recordSheet, "投票记录");
+     XLSX.writeFile(wb, "莞工之星投票数据_云端版.xlsx");
+     showStatus("导出成功！", "success");
+   }
+   function showStatus(m,t){
+     const s=document.getElementById("status");
+     s.textContent=m; s.className=t; s.style.display="block";
+     setTimeout(()=>s.style.display="none",2000);
+   }
+   // 绑定事件
+   document.getElementById("loginBtn").addEventListener("click", login);
+   document.getElementById("refreshBtn").addEventListener("click", refreshTable);
+   document.getElementById("clearVotesBtn").addEventListener("click", clearVotes);
+   document.getElementById("exportBtn").addEventListener("click", exportExcel);
+   document.getElementById("toggleAddFormBtn").addEventListener("click", toggleAddForm);
+   document.getElementById("addCandidateBtn").addEventListener("click", addCandidate);
+   document.getElementById("tableBody").addEventListener("click", async e=>{
+     if(e.target.classList.contains("edit")) await edit(e.target.dataset.id);
+     if(e.target.classList.contains("del")) await del(e.target.dataset.id);
+   });
+ });
+ </script>
+ </body>
+ </html>
