@@ -5,31 +5,148 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>莞工之星投票系统</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
-body{background:#e8f5e9;padding:15px}
-.container{max-width:900px;margin:0 auto;background:white;padding:20px;border-radius:14px;box-shadow:0 2px 10px rgba(0,128,0,0.06)}
-.header{text-align:center;padding-bottom:15px;border-bottom:2px solid #28a745}
-h1{color:#28a745;font-size:22px}
-h2{font-size:18px;margin:20px 0 10px;color:#226633;border-left:4px solid #28a745;padding-left:10px}
-.login-box{margin:20px 0;text-align:center}
-input,select{padding:10px 12px;margin:5px;border-radius:6px;border:1px solid #c3e6cb;outline:none}
-button{padding:10px 14px;margin:5px;border-radius:6px;border:none;background:#28a745;color:white;cursor:pointer;font-weight:bold}
-button:hover{background:#218838}
-.tab-group{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;justify-content:center}
-.tab{padding:10px 16px;border:1px solid #28a745;border-radius:20px;background:white;color:#28a745}
-.tab.active{background:#28a745;color:white}
-.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:15px;margin:20px 0}
-.card{border:1px solid #d4edda;background:#fafffc;border-radius:8px;padding:15px;text-align:center}
-.card button{width:100%;margin-top:10px}
-#status{text-align:center;padding:10px;margin:10px 0;display:none}
-.success{background:#d4edda;color:#155724}
-.error{background:#f8d7da;color:#721c24}
-.stat-item{padding:10px;background:#f0fff4;border-radius:6px;margin:6px 0;border-left:3px solid #28a745}
-.admin-card{border:1px solid #d4edda;background:#fafffc;border-radius:8px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-.warning{background:#ffc107;color:#333}
-.danger{background:#dc3545}
-.row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e6ffe6}
-.admin{margin-top:30px;padding-top:20px;border-top:2px solid #28a745}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+body {
+  background: #e8f5e9;
+  padding: 15px;
+}
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,128,0,0.06);
+}
+.header {
+  text-align: center;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #28a745;
+}
+h1 {
+  color: #28a745;
+  font-size: 22px;
+}
+h2 {
+  font-size: 18px;
+  margin: 20px 0 10px;
+  color: #226633;
+  border-left: 4px solid #28a745;
+  padding-left: 10px;
+}
+.login-box {
+  margin: 20px 0;
+  text-align: center;
+}
+input, select {
+  padding: 10px 12px;
+  margin: 5px;
+  border-radius: 6px;
+  border: 1px solid #c3e6cb;
+  outline: none;
+}
+button {
+  padding: 10px 14px;
+  margin: 5px;
+  border-radius: 6px;
+  border: none;
+  background: #28a745;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+button:hover {
+  background: #218838;
+}
+.tab-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+  justify-content: center;
+}
+.tab {
+  padding: 10px 16px;
+  border: 1px solid #28a745;
+  border-radius: 20px;
+  background: white;
+  color: #28a745;
+}
+.tab.active {
+  background: #28a745;
+  color: white;
+}
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+.card {
+  border: 1px solid #d4edda;
+  background: #fafffc;
+  border-radius: 8px;
+  padding: 15px;
+  text-align: center;
+}
+.card button {
+  width: 100%;
+  margin-top: 10px;
+}
+#status {
+  text-align: center;
+  padding: 10px;
+  margin: 10px 0;
+  display: none;
+}
+.success {
+  background: #d4edda;
+  color: #155724;
+}
+.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+.stat-item {
+  padding: 10px;
+  background: #f0fff4;
+  border-radius: 6px;
+  margin: 6px 0;
+  border-left: 3px solid #28a745;
+}
+.admin-card {
+  border: 1px solid #d4edda;
+  background: #fafffc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.warning {
+  background: #ffc107;
+  color: #333;
+}
+.danger {
+  background: #dc3545;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #e6ffe6;
+}
+.admin {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 2px solid #28a745;
+}
 </style>
 </head>
 <body>
@@ -94,12 +211,12 @@ button:hover{background:#218838}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Supabase 配置（已填好你的信息）
+// Supabase 配置（已填好你的专属信息）
 const SUPABASE_URL = "https://xttxhcalaqwltufhmfji.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
 
-// 初始化 Supabase（仅定义一次，解决重复定义问题）
-const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
+// 初始化 Supabase（仅定义一次，无重复）
+const supabase = window.supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_PWD = "123456"; // 管理员密码
 
 let currentUser = null;
@@ -107,135 +224,173 @@ let currentTab = "all";
 
 // 消息提示函数
 function msg(text, cls) {
-  const s = document.getElementById("status");
-  s.textContent = text;
-  s.className = cls;
-  s.style.display = "block";
-  setTimeout(() => s.style.display = "none", 2000);
+  const statusEl = document.getElementById("status");
+  statusEl.textContent = text;
+  statusEl.className = cls;
+  statusEl.style.display = "block";
+  setTimeout(() => {
+    statusEl.style.display = "none";
+  }, 2000);
 }
 
-// 用户登录
+// 用户登录函数
 function login() {
   const name = document.getElementById("name").value.trim();
   const stuId = document.getElementById("stuId").value.trim();
-  if (!name || !stuId) return msg("请填写姓名学号", "error");
   
+  if (!name || !stuId) {
+    msg("请填写姓名和学号", "error");
+    return;
+  }
+
   currentUser = name + "_" + stuId;
   document.getElementById("voteArea").style.display = "block";
   msg("登录成功", "success");
-  renderVote();
+  renderVoteList();
 }
 
 // 切换投票分类
 function tab(cat) {
   currentTab = cat;
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  // 更新标签样式
+  document.querySelectorAll(".tab").forEach(tabEl => {
+    tabEl.classList.remove("active");
+  });
   event.target.classList.add("active");
-  renderVote();
+  // 重新渲染列表
+  renderVoteList();
 }
 
-// 渲染投票列表
-async function renderVote() {
+// 渲染投票候选人列表
+async function renderVoteList() {
   try {
-    const { data: list } = await supabase.from("candidates").select("*");
-    const arr = currentTab === "all" ? list : list.filter(i => i.category === currentTab);
-    
-    document.getElementById("list").innerHTML = arr.map(i => `
+    const { data: candidates } = await supabase.from("candidates").select("*");
+    if (!candidates) return;
+
+    // 筛选分类
+    const filteredList = currentTab === "all" 
+      ? candidates 
+      : candidates.filter(item => item.category === currentTab);
+
+    // 渲染HTML
+    document.getElementById("list").innerHTML = filteredList.map(item => `
       <div class="card">
-        <h3>${i.name}</h3>
-        <p>${i.category}</p>
-        <p>${i.college}</p>
-        <p>票数：${i.votes}</p>
-        <button onclick="doVote(${i.id})">投票</button>
+        <h3>${item.name}</h3>
+        <p>${item.category}</p>
+        <p>${item.college}</p>
+        <p>票数：${item.votes || 0}</p>
+        <button onclick="castVote(${item.id})">投票</button>
       </div>
     `).join("");
-  } catch (e) {
+  } catch (error) {
     msg("加载候选人失败", "error");
-    console.error(e);
+    console.error("加载候选人错误：", error);
   }
 }
 
 // 执行投票
-async function doVote(cid) {
-  if (!currentUser) return msg("请先登录", "error");
+async function castVote(cid) {
+  if (!currentUser) {
+    msg("请先登录", "error");
+    return;
+  }
 
   try {
     // 检查是否已投票
-    const { data: has } = await supabase
+    const { data: existingVote } = await supabase
       .from("records")
       .select("*")
       .eq("user_key", currentUser)
       .eq("cid", cid);
 
-    if (has && has.length > 0) return msg("你已投过此人", "error");
+    if (existingVote && existingVote.length > 0) {
+      msg("你已为该候选人投票", "error");
+      return;
+    }
 
-    // 记录投票并更新票数
-    await supabase.from("records").insert([{ user_key: currentUser, cid }]);
-    await supabase.rpc("inc_vote", { cid });
+    // 记录投票
+    await supabase.from("records").insert([{
+      user_key: currentUser,
+      cid: cid
+    }]);
+
+    // 更新票数
+    await supabase.rpc("inc_vote", { cid: cid });
 
     msg("投票成功", "success");
-    renderVote();
-  } catch (e) {
+    renderVoteList();
+  } catch (error) {
     msg("投票失败", "error");
-    console.error(e);
+    console.error("投票错误：", error);
   }
 }
 
-// 管理员后台（修复语法错误，可正常触发）
+// 管理员后台入口
 function showAdmin() {
-  const p = document.getElementById("adminPwd").value.trim();
+  const inputPwd = document.getElementById("adminPwd").value.trim();
   
-  // 密码验证
-  if (p !== ADMIN_PWD) {
-    msg("密码错误", "error");
+  if (inputPwd !== ADMIN_PWD) {
+    msg("管理员密码错误", "error");
     return;
   }
-  
-  // 显示后台并加载数据
+
+  // 显示后台面板
   document.getElementById("adminArea").style.display = "block";
   msg("后台已解锁", "success");
-  renderAdmin();
+  // 加载后台数据
+  renderAdminPanel();
 }
 
-// 渲染管理员后台
-async function renderAdmin() {
+// 渲染管理员面板
+async function renderAdminPanel() {
   try {
+    // 获取所有数据
     const { data: candidates } = await supabase.from("candidates").select("*");
     const { data: records } = await supabase.from("records").select("*");
-    
+
+    if (!candidates) return;
+
     // 按票数排序
-    candidates.sort((a, b) => b.votes - a.votes);
+    candidates.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
     // 分类统计
-    const catMap = {};
-    candidates.forEach(i => {
-      if (!catMap[i.category]) catMap[i.category] = { c: 0, t: 0 };
-      catMap[i.category].c++;
-      catMap[i.category].t += i.votes;
+    const categoryStats = {};
+    candidates.forEach(item => {
+      if (!categoryStats[item.category]) {
+        categoryStats[item.category] = { count: 0, totalVotes: 0 };
+      }
+      categoryStats[item.category].count++;
+      categoryStats[item.category].totalVotes += item.votes || 0;
     });
 
     // 渲染分类统计
     let statHtml = "";
-    for (const k in catMap) {
-      statHtml += `<div class="stat-item">${k}：${catMap[k].c}人｜总票数${catMap[k].t}</div>`;
+    for (const [category, stats] of Object.entries(categoryStats)) {
+      statHtml += `<div class="stat-item">${category}：${stats.count}人 | 总票数${stats.totalVotes}</div>`;
     }
     document.getElementById("categoryStat").innerHTML = statHtml;
 
     // 渲染候选人列表
-    document.getElementById("cList").innerHTML = candidates.map(i => `
+    document.getElementById("cList").innerHTML = candidates.map(item => `
       <div class="admin-card">
-        <div>${i.name}｜${i.category}｜${i.college}｜票：${i.votes}</div>
-        <button class="danger" onclick="delC(${i.id})">删除</button>
+        <div>${item.name} | ${item.category} | ${item.college} | 票数：${item.votes || 0}</div>
+        <button class="danger" onclick="deleteCandidate(${item.id})">删除</button>
       </div>
     `).join("");
 
     // 渲染投票记录
-    document.getElementById("rList").innerHTML = records.map(r => `
-      <div class="row"><span>${r.user_key}</span><span>${r.time}</span></div>
-    `).join("");
-  } catch (e) {
+    document.getElementById("rList").innerHTML = records && records.length > 0 
+      ? records.map(record => `
+          <div class="row">
+            <span>${record.user_key}</span>
+            <span>${new Date(record.time).toLocaleString()}</span>
+          </div>
+        `).join("")
+      : "<div class='stat-item'>暂无投票记录</div>";
+
+  } catch (error) {
     msg("加载后台数据失败", "error");
-    console.error(e);
+    console.error("后台数据加载错误：", error);
   }
 }
 
@@ -244,102 +399,139 @@ async function addCandidate() {
   const name = document.getElementById("cname").value.trim();
   const category = document.getElementById("ccat").value;
   const college = document.getElementById("ccol").value.trim();
-  
-  if (!name) return msg("请填写姓名", "error");
+
+  if (!name) {
+    msg("请填写候选人姓名", "error");
+    return;
+  }
 
   try {
-    await supabase.from("candidates").insert([{ name, category, college }]);
-    msg("添加成功", "success");
-    renderAdmin();
-    renderVote();
-    
+    await supabase.from("candidates").insert([{
+      name: name,
+      category: category,
+      college: college,
+      votes: 0
+    }]);
+
+    msg("候选人添加成功", "success");
     // 清空输入框
     document.getElementById("cname").value = "";
     document.getElementById("ccol").value = "";
-  } catch (e) {
-    msg("添加失败", "error");
-    console.error(e);
+    // 重新渲染
+    renderAdminPanel();
+    renderVoteList();
+  } catch (error) {
+    msg("添加候选人失败", "error");
+    console.error("添加候选人错误：", error);
   }
 }
 
 // 删除候选人
-async function delC(id) {
-  if (!confirm("确定删除该候选人？")) return;
-  
+async function deleteCandidate(id) {
+  if (!confirm("确定要删除该候选人吗？删除后相关投票记录也会被清除！")) {
+    return;
+  }
+
   try {
+    // 删除候选人
     await supabase.from("candidates").delete().eq("id", id);
+    // 删除相关投票记录
     await supabase.from("records").delete().eq("cid", id);
-    msg("删除成功", "success");
-    renderAdmin();
-    renderVote();
-  } catch (e) {
-    msg("删除失败", "error");
-    console.error(e);
+
+    msg("候选人删除成功", "success");
+    // 重新渲染
+    renderAdminPanel();
+    renderVoteList();
+  } catch (error) {
+    msg("删除候选人失败", "error");
+    console.error("删除候选人错误：", error);
   }
 }
 
 // 重置所有票数
 async function resetAllVotes() {
-  if (!confirm("确定重置所有候选人票数？")) return;
-  
+  if (!confirm("确定要重置所有候选人的票数吗？此操作不可恢复！")) {
+    return;
+  }
+
   try {
-    const { data: list } = await supabase.from("candidates").select("id");
-    for (const item of list) {
-      await supabase.from("candidates").update({ votes: 0 }).eq("id", item.id);
+    const { data: candidates } = await supabase.from("candidates").select("id");
+    if (!candidates) return;
+
+    // 批量重置票数
+    for (const candidate of candidates) {
+      await supabase.from("candidates").update({ votes: 0 }).eq("id", candidate.id);
     }
-    msg("票数重置成功", "success");
-    renderAdmin();
-    renderVote();
-  } catch (e) {
-    msg("重置失败", "error");
-    console.error(e);
+
+    msg("所有票数已重置", "success");
+    renderAdminPanel();
+    renderVoteList();
+  } catch (error) {
+    msg("重置票数失败", "error");
+    console.error("重置票数错误：", error);
   }
 }
 
-// 导出投票结果（CSV格式）
+// 导出Excel（CSV格式）
 async function exportExcel() {
   try {
-    const { data: list } = await supabase.from("candidates").select("*");
-    list.sort((a, b) => b.votes - a.votes);
-    
+    const { data: candidates } = await supabase.from("candidates").select("*");
+    if (!candidates || candidates.length === 0) {
+      msg("暂无数据可导出", "error");
+      return;
+    }
+
+    // 按票数排序
+    candidates.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+
     // 构建CSV内容
-    let csv = "\uFEFF排名,姓名,类别,学院,票数\n";
-    list.forEach((i, idx) => {
-      csv += `${idx+1},${i.name},${i.category},${i.college},${i.votes}\n`;
+    let csvContent = "\uFEFF排名,姓名,类别,学院,票数\n";
+    candidates.forEach((item, index) => {
+      csvContent += `${index + 1},${item.name},${item.category},${item.college},${item.votes || 0}\n`;
     });
 
-    // 下载文件
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `莞工之星投票结果_${new Date().toLocaleDateString()}.csv`;
-    a.click();
-    
+    // 创建下载链接
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `莞工之星投票结果_${new Date().toLocaleDateString()}.csv`);
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
     msg("导出成功", "success");
-  } catch (e) {
+  } catch (error) {
     msg("导出失败", "error");
-    console.error(e);
+    console.error("导出错误：", error);
   }
 }
 
 // 清空所有数据
 async function clearAll() {
-  if (!confirm("警告：此操作会清空所有候选人及投票记录，不可恢复！")) return;
-  
+  if (!confirm("警告！此操作会清空所有候选人及投票记录，不可恢复！")) {
+    return;
+  }
+
   try {
+    // 清空投票记录
     await supabase.from("records").delete().neq("id", 0);
+    // 清空候选人
     await supabase.from("candidates").delete().neq("id", 0);
+
     msg("所有数据已清空", "success");
-    location.reload();
-  } catch (e) {
-    msg("清空失败", "error");
-    console.error(e);
+    // 刷新页面
+    window.location.reload();
+  } catch (error) {
+    msg("清空数据失败", "error");
+    console.error("清空数据错误：", error);
   }
 }
 
-// 页面初始化
+// 页面加载完成后初始化
 window.onload = function() {
-  renderVote();
+  renderVoteList();
 };
 </script>
 </body>
