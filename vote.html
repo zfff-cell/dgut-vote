@@ -3,25 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>莞工之星投票</title>
+<title>莞工之星投票系统</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
 body{background:#e8f5e9;padding:15px}
-.container{max-width:900px;margin:0 auto;background:white;padding:20px;border-radius:12px}
+.container{max-width:900px;margin:0 auto;background:white;padding:20px;border-radius:14px;box-shadow:0 2px 10px rgba(0,128,0,0.06)}
 .header{text-align:center;padding-bottom:15px;border-bottom:2px solid #28a745}
 h1{color:#28a745;font-size:22px}
+h2{font-size:18px;margin:20px 0 10px;color:#226633;border-left:4px solid #28a745;padding-left:10px}
 .login-box{margin:20px 0;text-align:center}
-input{padding:12px;font-size:15px;border-radius:6px;border:1px solid #ccc;margin:8px;width:160px}
-button{padding:12px 20px;border:none;border-radius:6px;background:#28a745;color:white;margin:8px;min-height:44px}
+input,select{padding:10px 12px;margin:5px;border-radius:6px;border:1px solid #c3e6cb;outline:none}
+button{padding:10px 14px;margin:5px;border-radius:6px;border:none;background:#28a745;color:white;cursor:pointer;font-weight:bold}
+button:hover{background:#218838}
 .tab-group{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0;justify-content:center}
 .tab{padding:10px 16px;border:1px solid #28a745;border-radius:20px;background:white;color:#28a745}
 .tab.active{background:#28a745;color:white}
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:15px;margin:20px 0}
-.card{border:1px solid #ddd;border-radius:8px;padding:15px;text-align:center}
+.card{border:1px solid #d4edda;background:#fafffc;border-radius:8px;padding:15px;text-align:center}
 .card button{width:100%;margin-top:10px}
 #status{text-align:center;padding:10px;margin:10px 0;display:none}
 .success{background:#d4edda;color:#155724}
 .error{background:#f8d7da;color:#721c24}
+.stat-item{padding:10px;background:#f0fff4;border-radius:6px;margin:6px 0;border-left:3px solid #28a745}
+.admin-card{border:1px solid #d4edda;background:#fafffc;border-radius:8px;padding:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.warning{background:#ffc107;color:#333}
+.danger{background:#dc3545}
+.row{display:flex;justify-content:space-between;padding:10px;border-bottom:1px solid #e6ffe6}
+.admin{margin-top:30px;padding-top:20px;border-top:2px solid #28a745}
 </style>
 </head>
 <body>
@@ -38,6 +46,9 @@ button{padding:12px 20px;border:none;border-radius:6px;background:#28a745;color:
     <input id="name" placeholder="姓名">
     <input id="stuId" placeholder="学号">
     <button onclick="login()">确认身份</button>
+    <br/>
+    <input type="password" id="adminPwd" placeholder="管理员密码" style="width:140px">
+    <button onclick="showAdmin()">进入后台</button>
   </div>
 
   <div id="voteArea" style="display:none;">
@@ -49,54 +60,104 @@ button{padding:12px 20px;border:none;border-radius:6px;background:#28a745;color:
       <div class="tab" onclick="tab('学术之星')">学术之星</div>
       <div class="tab" onclick="tab('文体之星')">文体之星</div>
     </div>
-
     <div class="list" id="list"></div>
+  </div>
+
+  <div id="adminArea" class="admin" style="display:none;">
+    <h2>① 添加候选人</h2>
+    <input id="cname" placeholder="姓名">
+    <select id="ccat">
+      <option>自强之星</option>
+      <option>志愿之星</option>
+      <option>团队之星</option>
+      <option>学术之星</option>
+      <option>文体之星</option>
+    </select>
+    <input id="ccol" placeholder="学院">
+    <button onclick="addCandidate()">添加</button>
+
+    <h2>② 分类票数统计</h2>
+    <div id="categoryStat"></div>
+
+    <h2>③ 候选人排行</h2>
+    <div id="cList"></div>
+
+    <h2>④ 投票记录</h2>
+    <div id="rList"></div>
+
+    <br/>
+    <button class="warning" onclick="resetAllVotes()">一键重置票数</button>
+    <button onclick="exportExcel()">导出 Excel</button>
+    <button class="danger" onclick="clearAll()">清空所有数据</button>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sql.js-wasm/sql-wasm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-function getCandidates() {
-  return JSON.parse(localStorage.getItem("candidates") || '[{"id":1,"name":"测试1","category":"自强之星","college":"学院","votes":0},{"id":2,"name":"测试2","category":"志愿之星","college":"学院","votes":0},{"id":3,"name":"测试3","category":"团队之星","college":"学院","votes":0},{"id":4,"name":"测试4","category":"学术之星","college":"学院","votes":0},{"id":5,"name":"测试5","category":"文体之星","college":"学院","votes":0}]');
-}
-
-function saveCandidates(list) {
-  localStorage.setItem("candidates", JSON.stringify(list));
-}
-
-function getRecords() {
-  return JSON.parse(localStorage.getItem("voteRecords") || "[]");
-}
-
-function saveRecord(user, id) {
-  const records = getRecords();
-  records.push({ user, candidateId: id, time: new Date().toLocaleString() });
-  localStorage.setItem("voteRecords", JSON.stringify(records));
-}
+const API = "https://vote.123456api.com/api";
 
 let user = null;
 let now = "all";
+const ADMIN_PWD = "123456";
 
-function login() {
-  const n = document.getElementById("name").value.trim();
-  const s = document.getElementById("stuId").value.trim();
-  if (!n || !s) { msg("请填写姓名学号", "error"); return; }
-  user = n + "_" + s;
-  document.getElementById("voteArea").style.display = "block";
-  msg("登录成功", "success");
-  render();
+function msg(t,c){
+  let s=document.getElementById("status");
+  s.textContent=t;s.className=c;s.style.display="block";
+  setTimeout(()=>s.style.display="none",2000);
 }
 
-function tab(cat) {
-  now = cat;
-  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+async function getCandidates(){
+  let res=await axios.get(API+"/candidates");
+  return res.data;
+}
+
+async function getRecords(){
+  let res=await axios.get(API+"/records");
+  return res.data;
+}
+
+async function addRecord(user,cid){
+  await axios.post(API+"/record",{user,cid});
+}
+
+async function addCandidate(name,category,college){
+  await axios.post(API+"/candidate",{name,category,college});
+}
+
+async function delCandidate(id){
+  await axios.delete(API+"/candidate/"+id);
+}
+
+async function resetVotes(){
+  await axios.post(API+"/reset");
+}
+
+async function clearAllData(){
+  await axios.post(API+"/clear");
+}
+
+async function login(){
+  let n=document.getElementById("name").value.trim();
+  let s=document.getElementById("stuId").value.trim();
+  if(!n||!s){msg("请填写姓名学号","error");return;}
+  user=n+"_"+s;
+  document.getElementById("voteArea").style.display="block";
+  msg("登录成功","success");
+  renderVote();
+}
+
+function tab(cat){
+  now=cat;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   event.target.classList.add("active");
-  render();
+  renderVote();
 }
 
-function render() {
-  const list = getCandidates();
-  const arr = now == "all" ? list : list.filter(i => i.category == now);
-  document.getElementById("list").innerHTML = arr.map(i => `
+async function renderVote(){
+  let list=await getCandidates();
+  let arr=now=="all"?list:list.filter(i=>i.category==now);
+  document.getElementById("list").innerHTML=arr.map(i=>`
     <div class="card">
       <h3>${i.name}</h3>
       <p>${i.category}</p>
@@ -107,28 +168,92 @@ function render() {
   `).join("");
 }
 
-function doVote(id) {
-  if (!user) { msg("请先登录", "error"); return; }
-  const records = getRecords();
-  const exists = records.some(r => r.user == user && r.candidateId == id);
-  if (exists) { msg("你已经投过此人", "error"); return; }
-
-  const list = getCandidates();
-  const item = list.find(x => x.id == id);
-  item.votes++;
-  saveCandidates(list);
-  saveRecord(user, id);
-  msg("投票成功", "success");
-  render();
+async function doVote(id){
+  if(!user){msg("请先登录","error");return;}
+  let records=await getRecords();
+  let has=records.some(r=>r.user==user&&r.cid==id);
+  if(has){msg("你已投过此人","error");return;}
+  await addRecord(user,id);
+  msg("投票成功","success");
+  renderVote();
 }
 
-function msg(t, c) {
-  const s = document.getElementById("status");
-  s.textContent = t; s.className = c; s.style.display = "block";
-  setTimeout(() => s.style.display = "none", 2000);
+function showAdmin(){
+  let p=document.getElementById("adminPwd").value;
+  if(p!==ADMIN_PWD){msg("密码错误","error");return;}
+  document.getElementById("adminArea").style.display="block";
+  msg("后台已解锁","success");
+  renderAdmin();
 }
 
-render();
-</script>
-</body>
-</html>
+async function renderAdmin(){
+  let candidates=await getCandidates();
+  let records=await getRecords();
+  candidates.sort((a,b)=>b.votes-a.votes);
+
+  let catMap={};
+  candidates.forEach(i=>{
+    if(!catMap[i.category])catMap[i.category]={c:0,t:0};
+    catMap[i.category].c++;
+    catMap[i.category].t+=i.votes;
+  });
+
+  let statHtml="";
+  for(let k in catMap){
+    statHtml+=`<div class="stat-item">${k}：${catMap[k].c}人｜总票数${catMap[k].t}</div>`;
+  }
+  document.getElementById("categoryStat").innerHTML=statHtml;
+
+  document.getElementById("cList").innerHTML=candidates.map(i=>`
+    <div class="admin-card">
+      <div>${i.name}｜${i.category}｜${i.college}｜票：${i.votes}</div>
+      <button class="danger" onclick="delC(${i.id})">删除</button>
+    </div>
+  `).join("");
+
+   document.getElementById("rList").innerHTML=records.map(r=>`
+     <div class="row"><span>${r.user}</span><span>${r.time}</span></div>
+   `).join("");
+ }
+ async function addCandidate(){
+   let n=document.getElementById("cname").value.trim();
+   let t=document.getElementById("ccat").value;
+   let c=document.getElementById("ccol").value.trim();
+   if(!n)return;
+   await addCandidate(n,t,c);
+   renderAdmin();
+   renderVote();
+ }
+ async function delC(id){
+   await delCandidate(id);
+   renderAdmin();
+   renderVote();
+ }
+ async function resetAllVotes(){
+   if(!confirm("确定重置所有票数？"))return;
+   await resetVotes();
+   renderAdmin();
+   renderVote();
+ }
+ async function exportExcel(){
+   let list=await getCandidates();
+   list.sort((a,b)=>b.votes-a.votes);
+   let csv="排名,姓名,类别,学院,票数\n";
+   list.forEach((i,idx)=>{
+     csv+=`${idx+1},${i.name},${i.category},${i.college},${i.votes}\n`;
+   });
+   let blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+   let a=document.createElement("a");
+   a.href=URL.createObjectURL(blob);
+   a.download="莞工之星投票结果.csv";
+   a.click();
+ }
+ async function clearAll(){
+   if(!confirm("确定清空所有数据？不可恢复！"))return;
+   await clearAllData();
+   location.reload();
+ }
+ renderVote();
+ </script>
+ </body>
+ </html>
