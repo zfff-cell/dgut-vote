@@ -6,36 +6,65 @@
 <title>莞工之星 - 投票系统</title>
 <style>
 :root { --green:#28a745; --light:#e8f5e9; --dark:#1e7e34; --red:#dc3545; }
-* { box-sizing:border-box; margin:0; padding:0; font-family:"Microsoft YaHei",sans-serif; }
+* {
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:"Microsoft YaHei",sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
 body { background:var(--light); padding:15px; }
 .container { max-width:900px; margin:0 auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
 .header { text-align:center; padding-bottom:15px; border-bottom:2px solid var(--green); }
 .logo { width:80px; margin-bottom:10px; }
 h1 { color:var(--green); font-size:22px; margin:10px 0 5px; }
 .login-box { margin:20px 0; text-align:center; }
-input { padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; margin:5px; width:180px; }
-button { padding:10px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; background:var(--green); color:white; margin:5px; }
+input { padding:12px; font-size:15px; border-radius:6px; border:1px solid #ccc; margin:8px; width:160px; }
+button {
+  padding:12px 20px;
+  border:none;
+  border-radius:6px;
+  font-size:15px;
+  cursor:pointer;
+  background:var(--green);
+  color:white;
+  margin:8px;
+  min-height:44px;
+  user-select: none;
+}
 button:disabled { background:#ccc; cursor:not-allowed; }
 .tab-group { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; justify-content:center; }
-.tab { padding:8px 14px; border:1px solid var(--green); border-radius:20px; background:white; color:var(--green); cursor:pointer; }
+.tab {
+  padding:10px 16px;
+  border:1px solid var(--green);
+  border-radius:20px;
+  background:white;
+  color:var(--green);
+  cursor:pointer;
+  min-height:44px;
+  user-select: none;
+}
 .tab.active { background:var(--green); color:white; }
 .list { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:15px; margin:20px 0; }
 .card { border:1px solid #ddd; border-radius:8px; padding:15px; text-align:center; }
 .card h3 { margin-bottom:6px; font-size:17px; }
 .card p { color:#666; font-size:14px; margin-bottom:8px; }
+.card button { width:100%; margin-top:10px; }
 #status { text-align:center; padding:10px; border-radius:6px; margin:10px 0; display:none; }
 .success { background:#d4edda; color:#155724; }
 .error { background:#f8d7da; color:#721c24; }
+.loading { text-align:center; padding:20px; color:#666; }
 .rank { margin-top:30px; padding-top:20px; border-top:2px solid var(--light); }
 .rank h2 { color:var(--green); text-align:center; margin-bottom:15px; font-size:20px; }
 .rank-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; }
 </style>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <!-- 校徽 Logo 已加入 -->
-    <img src="./dgut-logo.png" class="logo" alt="东莞理工学院校徽">
+    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/30a2e66a0a5a442e9a0e0481020a70a0~tplv-a9rns2rl98-image.image" class="logo" alt="东莞理工学院校徽">
     <h1>莞工之星 · 投票系统</h1>
     <p>一个姓名只能对应一个学号，每个类别限投1次</p>
   </div>
@@ -44,20 +73,21 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 
   <div class="login-box">
     <input id="name" placeholder="姓名">
-    <input id="stuId" placeholder="学号" type="number">
-    <button onclick="userLogin()">确认身份</button>
+    <input id="stuId" placeholder="学号" type="text">
+    <button id="loginBtn">确认身份</button>
   </div>
 
   <div id="voteArea" style="display:none;">
     <div class="tab-group">
-      <button class="tab active" onclick="show('all')">全部</button>
-      <button class="tab" onclick="show('自强之星')">自强之星</button>
-      <button class="tab" onclick="show('志愿之星')">志愿之星</button>
-      <button class="tab" onclick="show('团队之星')">团队之星</button>
-      <button class="tab" onclick="show('学术之星')">学术之星</button>
-      <button class="tab" onclick="show('文体之星')">文体之星</button>
+      <button class="tab active" data-cat="all">全部</button>
+      <button class="tab" data-cat="自强之星">自强之星</button>
+      <button class="tab" data-cat="志愿之星">志愿之星</button>
+      <button class="tab" data-cat="团队之星">团队之星</button>
+      <button class="tab" data-cat="学术之星">学术之星</button>
+      <button class="tab" data-cat="文体之星">文体之星</button>
     </div>
 
+    <div id="loading" class="loading" style="display:none;">加载中...</div>
     <div class="list" id="list"></div>
 
     <div class="rank">
@@ -68,28 +98,64 @@ button:disabled { background:#ccc; cursor:not-allowed; }
 </div>
 
 <script>
-// ====================== 候选人数据 ======================
-function getCandidates() {
-  const d = localStorage.getItem("dgut_candidates");
-  return d ? JSON.parse(d) : [];
-}
-function saveCandidates(arr) {
-  localStorage.setItem("dgut_candidates", JSON.stringify(arr));
-}
+const supabase = supabaseJs.createClient(
+  "https://xttxhcalaqwltufhmfji.supabase.co",
+  "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD"
+);
 
-// ====================== 账号绑定与投票记录 ======================
-function getAccounts() {
-  const d = localStorage.getItem("vote_accounts");
-  return d ? JSON.parse(d) : {}; // 结构: { "姓名": "学号", ... }
-}
-function getRecords() {
-  const d = localStorage.getItem("vote_records");
-  return d ? JSON.parse(d) : {}; // 结构: { "姓名_学号": { "类别": "候选人id", ... }, ... }
-}
-
-// ====================== 登录校验 ======================
 let currentUser = null;
-function userLogin() {
+
+// 工具函数：显示加载状态
+function showLoading(show) {
+  document.getElementById("loading").style.display = show ? "block" : "none";
+}
+
+// 获取候选人
+async function getCandidates() {
+  const { data, error } = await supabase.from("candidates").select("*").order("votes", { ascending: false });
+  if (error) console.error("获取候选人失败:", error);
+  return data || [];
+}
+
+// 获取账号绑定
+async function getAccounts() {
+  const { data, error } = await supabase.from("vote_accounts").select("name, stu_id");
+  if (error) console.error("获取账号失败:", error);
+  const accounts = {};
+  data?.forEach(a => accounts[a.name] = a.stu_id);
+  return accounts;
+}
+
+// 获取投票记录
+async function getRecords() {
+  const { data, error } = await supabase.from("vote_records").select("user_key, category, candidate_id");
+  if (error) console.error("获取投票记录失败:", error);
+  const records = {};
+  data?.forEach(r => {
+    if (!records[r.user_key]) records[r.user_key] = {};
+    records[r.user_key][r.category] = r.candidate_id;
+  });
+  return records;
+}
+
+// 绑定账号
+async function bindAccount(name, stuId) {
+  const { error } = await supabase.from("vote_accounts").insert([{ name, stu_id: stuId }]);
+  if (error) console.error("绑定账号失败:", error);
+  return !error;
+}
+
+// 显示消息提示
+function showMsg(text, type) {
+  const s = document.getElementById("status");
+  s.textContent = text;
+  s.className = type;
+  s.style.display = "block";
+  setTimeout(() => s.style.display = "none", 2500);
+}
+
+// 登录逻辑
+async function userLogin() {
   const name = document.getElementById("name").value.trim();
   const stuId = document.getElementById("stuId").value.trim();
   if (!name || !stuId) {
@@ -97,108 +163,129 @@ function userLogin() {
     return;
   }
 
-  const accounts = getAccounts();
-  // 1. 检查姓名是否已绑定其他学号
+  const accounts = await getAccounts();
   if (accounts[name] && accounts[name] !== stuId) {
-    showMsg("该姓名已绑定其他学号，无法使用当前学号投票", "error");
+    showMsg("该姓名已绑定其他学号", "error");
     return;
   }
-  // 2. 检查学号是否已绑定其他姓名
-  for (const [existName, existId] of Object.entries(accounts)) {
-    if (existId === stuId && existName !== name) {
-      showMsg("该学号已绑定其他姓名，无法使用当前姓名投票", "error");
+  for (const [n, id] of Object.entries(accounts)) {
+    if (id === stuId && n !== name) {
+      showMsg("该学号已绑定其他姓名", "error");
       return;
     }
   }
 
-  // 3. 绑定新账号
   if (!accounts[name]) {
-    accounts[name] = stuId;
-    localStorage.setItem("vote_accounts", JSON.stringify(accounts));
+    const ok = await bindAccount(name, stuId);
+    if (!ok) {
+      showMsg("绑定账号失败，请检查网络或联系管理员", "error");
+      return;
+    }
   }
 
   currentUser = `${name}_${stuId}`;
   document.getElementById("voteArea").style.display = "block";
   show("all");
-  showMsg("身份确认成功，可以开始投票", "success");
+  showMsg("身份确认成功，可以投票", "success");
 }
 
-// ====================== 展示候选人 ======================
+// 显示候选人列表
 let nowCat = "all";
-function show(cat) {
+async function show(cat) {
   nowCat = cat;
-  const list = getCandidates();
+  showLoading(true);
+  const list = await getCandidates();
   const showList = cat === "all" ? list : list.filter(i => i.category === cat);
-  const records = getRecords();
+  const records = await getRecords();
   const userRec = records[currentUser] || {};
+  showLoading(false);
 
-  document.getElementById("list").innerHTML = showList.map(i => {
-    const voted = userRec[i.category] === i.id;
-    return `
-      <div class="card">
-        <h3>${i.name}</h3>
-        <p>${i.category}</p>
-        <p>${i.college}</p>
-        <p>票数：${i.votes || 0}</p>
-        <button ${voted?"disabled":""} onclick="doVote('${i.id}','${i.category}')">
-          ${voted?"已投":"投票"}
-        </button>
-      </div>
-    `;
-  }).join("");
-
+  const listEl = document.getElementById("list");
+  if (showList.length === 0) {
+    listEl.innerHTML = "<p style='text-align:center; padding:20px;'>暂无该分类候选人</p>";
+  } else {
+    listEl.innerHTML = showList.map(i => {
+      const voted = userRec[i.category] === i.id;
+      return `
+        <div class="card">
+          <h3>${i.name}</h3>
+          <p>${i.category}</p>
+          <p>${i.college || '未知学院'}</p>
+          <p>票数：${i.votes || 0}</p>
+          <button ${voted ? "disabled" : ""} onclick="doVote('${i.id}','${i.category}')">
+            ${voted ? "已投" : "投票"}
+          </button>
+        </div>
+      `;
+    }).join("");
+  }
   renderRank();
 }
 
-// ====================== 投票核心逻辑 ======================
-function doVote(id, cat) {
+// 投票逻辑
+async function doVote(id, cat) {
   if (!currentUser) {
     showMsg("请先确认身份", "error");
     return;
   }
 
-  const records = getRecords();
-  if (!records[currentUser]) records[currentUser] = {};
-
-  // 同一类别已投过 → 禁止
-  if (records[currentUser][cat]) {
-    showMsg("该类别你已投过，不能重复投票", "error");
+  const records = await getRecords();
+  if (records[currentUser]?.[cat]) {
+    showMsg("该类别你已投过", "error");
     return;
   }
 
-  // 执行投票
-  const list = getCandidates();
-  const item = list.find(x => x.id === id);
-  if (!item) return;
-  item.votes = (item.votes || 0) + 1;
-  saveCandidates(list);
+  const { error } = await supabase.from("vote_records").insert([{
+    user_key: currentUser,
+    category: cat,
+    candidate_id: id
+  }]);
+  if (error) {
+    showMsg("投票失败，请重试", "error");
+    console.error("投票错误:", error);
+    return;
+  }
 
-  // 记录投票
-  records[currentUser][cat] = id;
-  localStorage.setItem("vote_records", JSON.stringify(records));
+  const { data: candidate } = await supabase.from("candidates").select("votes").eq("id", id).single();
+  await supabase.from("candidates").update({ votes: (candidate?.votes || 0) + 1 }).eq("id", id);
 
   showMsg("投票成功！", "success");
   show(nowCat);
 }
 
-// ====================== 渲染排行 ======================
-function renderRank() {
-  const list = getCandidates().sort((a,b)=>(b.votes||0)-(a.votes||0));
-  document.getElementById("rankList").innerHTML = list.map((i,k)=>`
+// 渲染排行
+async function renderRank() {
+  const list = await getCandidates();
+  document.getElementById("rankList").innerHTML = list.map((i, k) => `
     <div class="rank-item">
-      <span>${k+1}. ${i.name}（${i.category}）</span>
-      <span>${i.votes||0} 票</span>
+      <span>${k + 1}. ${i.name}（${i.category}）</span>
+      <span>${i.votes || 0} 票</span>
     </div>
   `).join("");
 }
 
-function showMsg(text, type) {
-  const s = document.getElementById("status");
-  s.textContent = text;
-  s.className = type;
-  s.style.display = "block";
-  setTimeout(()=>s.style.display="none",2500);
-}
+// 移动端事件绑定
+document.addEventListener('DOMContentLoaded', function() {
+  // 登录按钮
+  document.getElementById("loginBtn").addEventListener('click', userLogin);
+  document.getElementById("loginBtn").addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    userLogin();
+  });
+
+  // 分类标签
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      show(tab.dataset.cat);
+    });
+    tab.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      tab.click();
+    });
+  });
+});
 </script>
 </body>
 </html>
