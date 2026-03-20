@@ -169,7 +169,10 @@ async function doVote(cid) {
 // 显示管理员后台
 function showAdmin() {
   const p = document.getElementById("adminPwd").value;
-  if (p !== ADMIN_PWD) return msg("密码错误", "error");
+  if (p !== ADMIN_PWD) {
+    msg("密码错误", "error");
+    return;
+  }
   document.getElementById("adminArea").style.display = "block";
   msg("后台已解锁", "success");
   renderAdmin();
