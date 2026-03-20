@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
 <title>莞工之星 - 管理员后台</title>
 <style>
 :root { --green: #28a745; --light: #e8f5e9; --dark: #1e7e34; --red: #dc3545; }
@@ -26,6 +27,96 @@ button.danger { background: var(--red); }
 .error { background: #f8d7da; color: #721c24; }
 .add-form { background: var(--light); padding: 15px; border-radius: 8px; margin: 20px 0; }
 .add-form h3 { margin-top: 0; color: var(--green); margin-bottom: 10px; }
+=======
+<title>莞工之星 - 管理后台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:sans-serif}
+body{
+  background:#e8f5e9;
+  padding:15px;
+}
+.container{
+  max-width:900px;
+  margin:0 auto;
+  background:#ffffff;
+  padding:22px;
+  border-radius:14px;
+  box-shadow:0 2px 10px rgba(0,128,0,0.06);
+}
+h1{
+  color:#28a745;
+  margin-bottom:20px;
+  font-size:24px;
+  text-align:center;
+}
+h2{
+  font-size:18px;
+  margin:20px 0 10px;
+  color:#226633;
+  border-left:4px solid #28a745;
+  padding-left:10px;
+}
+.card{
+  border:1px solid #d4edda;
+  background:#fafffc;
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+input,select{
+  padding:10px 12px;
+  margin:5px;
+  border-radius:6px;
+  border:1px solid #c3e6cb;
+  outline:none;
+}
+input:focus,select:focus{
+  border-color:#28a745;
+  box-shadow:0 0 0 2px rgba(40,167,69,0.15);
+}
+button{
+  padding:10px 14px;
+  margin:5px;
+  border-radius:6px;
+  border:none;
+  background:#28a745;
+  color:white;
+  cursor:pointer;
+  font-weight:bold;
+}
+button:hover{
+  background:#218838;
+}
+.warning{
+  background:#ffc107;
+  color:#333;
+}
+.danger{
+  background:#dc3545;
+}
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  border-bottom:1px solid #e6ffe6;
+}
+.stat-item{
+  padding:10px;
+  background:#f0fff4;
+  border-radius:6px;
+  margin:6px 0;
+  border-left:3px solid #28a745;
+}
+.btns{
+  margin-top:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+>>>>>>> 6df61603dbc29382d006bb002fc16519d601ca02
 </style>
 </head>
 <body>
@@ -36,6 +127,7 @@ button.danger { background: var(--red); }
   </div>
   <div id="status"></div>
 
+<<<<<<< HEAD
   <div id="loginPanel" class="login-box">
     <h3>管理员登录</h3>
     <input type="password" id="adminPwd" placeholder="密码">
@@ -212,3 +304,151 @@ window.addEventListener('load', function() {
  </script>
  </body>
  </html>
+=======
+<div class="container">
+  <h1>莞工之星 · 投票管理后台</h1>
+
+  <h2>① 添加候选人</h2>
+  <input id="cname" placeholder="姓名">
+  <select id="ccat">
+    <option>自强之星</option>
+    <option>志愿之星</option>
+    <option>团队之星</option>
+    <option>学术之星</option>
+    <option>文体之星</option>
+  </select>
+  <input id="ccol" placeholder="学院">
+  <button onclick="addCandidate()">添加</button>
+
+  <h2>② 分类票数统计</h2>
+  <div id="categoryStat"></div>
+
+  <h2>③ 候选人总排行</h2>
+  <div id="cList"></div>
+
+  <h2>④ 投票记录</h2>
+  <div id="rList"></div>
+
+  <div class="btns">
+    <button class="warning" onclick="resetAllVotes()">一键重置票数</button>
+    <button onclick="exportExcel()">导出 Excel 表格</button>
+    <button class="danger" onclick="clearAll()">清空所有数据</button>
+  </div>
+</div>
+
+<script>
+function getCandidates() {
+  return JSON.parse(localStorage.getItem("candidates") || '[{"id":1,"name":"测试1","category":"自强之星","college":"学院","votes":0},{"id":2,"name":"测试2","category":"志愿之星","college":"学院","votes":0},{"id":3,"name":"测试3","category":"团队之星","college":"学院","votes":0},{"id":4,"name":"测试4","category":"学术之星","college":"学院","votes":0},{"id":5,"name":"测试5","category":"文体之星","college":"学院","votes":0}]');
+}
+function saveCandidates(list) {
+  localStorage.setItem("candidates", JSON.stringify(list));
+}
+function getRecords() {
+  return JSON.parse(localStorage.getItem("voteRecords") || "[]");
+}
+
+function renderCategoryStat() {
+  const list = getCandidates();
+  const catMap = {};
+  list.forEach(i => {
+    if (!catMap[i.category]) catMap[i.category] = { count: 0, total: 0 };
+    catMap[i.category].count++;
+    catMap[i.category].total += i.votes;
+  });
+
+  let html = "";
+  for (let cat in catMap) {
+    html += `
+      <div class="stat-item">
+        ${cat}：${catMap[cat].count} 人｜总票数：${catMap[cat].total}
+      </div>
+    `;
+  }
+  document.getElementById("categoryStat").innerHTML = html;
+}
+
+function renderCandidates() {
+  const list = getCandidates();
+  list.sort((a,b)=>b.votes - a.votes);
+  document.getElementById("cList").innerHTML = list.map(i=>`
+    <div class="card">
+      <div>
+        ${i.name}｜${i.category}｜${i.college}<br/>
+        票数：${i.votes}
+      </div>
+      <button class="danger" onclick="delCandidate(${i.id})">删除</button>
+    </div>
+  `).join("");
+}
+
+function renderRecords() {
+  const records = getRecords();
+  document.getElementById("rList").innerHTML = records.map(r=>`
+    <div class="row">
+      <span>${r.user}</span>
+      <span>${r.time}</span>
+    </div>
+  `).join("");
+}
+
+function addCandidate() {
+  const name = document.getElementById("cname").value.trim();
+  const cat = document.getElementById("ccat").value;
+  const col = document.getElementById("ccol").value.trim();
+  if (!name) return alert("请输入姓名");
+  const list = getCandidates();
+  const newId = list.length ? Math.max(...list.map(x=>x.id)) + 1 : 1;
+  list.push({ id: newId, name, category: cat, college: col, votes: 0 });
+  saveCandidates(list);
+  renderAll();
+}
+
+function delCandidate(id) {
+  let list = getCandidates();
+  list = list.filter(x=>x.id != id);
+  saveCandidates(list);
+  renderAll();
+}
+
+function resetAllVotes() {
+  if (!confirm("确定重置所有票数为 0？")) return;
+  const list = getCandidates();
+  list.forEach(i => i.votes = 0);
+  saveCandidates(list);
+  renderAll();
+  alert("已重置所有票数");
+}
+
+function exportExcel() {
+  const list = getCandidates();
+  let csv = "排名,姓名,类别,学院,票数\n";
+  list.sort((a,b)=>b.votes - a.votes);
+  list.forEach((i, idx) => {
+    csv += `${idx+1},${i.name},${i.category},${i.college},${i.votes}\n`;
+  });
+  const blob = new Blob(["\uFEFF"+csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "莞工之星投票结果.csv";
+  a.click();
+}
+
+function clearAll() {
+  if (!confirm("确定清空所有数据？不可恢复！")) return;
+  localStorage.removeItem("candidates");
+  localStorage.removeItem("voteRecords");
+  renderAll();
+}
+
+function renderAll() {
+  renderCandidates();
+  renderRecords();
+  renderCategoryStat();
+}
+
+renderAll();
+</script>
+</body>
+</html>
+
+>>>>>>> 6df61603dbc29382d006bb002fc16519d601ca02
