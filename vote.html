@@ -55,37 +55,48 @@ button{padding:12px 20px;border:none;border-radius:6px;background:#28a745;color:
 </div>
 
 <script>
-const candidates = [
-  {id:1,name:"测试1",category:"自强之星",college:"学院",votes:10},
-  {id:2,name:"测试2",category:"志愿之星",college:"学院",votes:20},
-  {id:3,name:"测试3",category:"团队之星",college:"学院",votes:30},
-  {id:4,name:"测试4",category:"学术之星",college:"学院",votes:40},
-  {id:5,name:"测试5",category:"文体之星",college:"学院",votes:50}
-];
+function getCandidates() {
+  return JSON.parse(localStorage.getItem("candidates") || '[{"id":1,"name":"测试1","category":"自强之星","college":"学院","votes":0},{"id":2,"name":"测试2","category":"志愿之星","college":"学院","votes":0},{"id":3,"name":"测试3","category":"团队之星","college":"学院","votes":0},{"id":4,"name":"测试4","category":"学术之星","college":"学院","votes":0},{"id":5,"name":"测试5","category":"文体之星","college":"学院","votes":0}]');
+}
+
+function saveCandidates(list) {
+  localStorage.setItem("candidates", JSON.stringify(list));
+}
+
+function getRecords() {
+  return JSON.parse(localStorage.getItem("voteRecords") || "[]");
+}
+
+function saveRecord(user, id) {
+  const records = getRecords();
+  records.push({ user, candidateId: id, time: new Date().toLocaleString() });
+  localStorage.setItem("voteRecords", JSON.stringify(records));
+}
 
 let user = null;
 let now = "all";
 
-function login(){
-  const n=document.getElementById("name").value.trim();
-  const s=document.getElementById("stuId").value.trim();
-  if(!n||!s){msg("请填写姓名学号","error");return}
-  user=n+s;
-  document.getElementById("voteArea").style.display="block";
-  msg("登录成功","success");
+function login() {
+  const n = document.getElementById("name").value.trim();
+  const s = document.getElementById("stuId").value.trim();
+  if (!n || !s) { msg("请填写姓名学号", "error"); return; }
+  user = n + "_" + s;
+  document.getElementById("voteArea").style.display = "block";
+  msg("登录成功", "success");
   render();
 }
 
-function tab(cat){
-  now=cat;
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+function tab(cat) {
+  now = cat;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   event.target.classList.add("active");
   render();
 }
 
-function render(){
-  const arr=now=="all"?candidates:candidates.filter(i=>i.category==now);
-  document.getElementById("list").innerHTML=arr.map(i=>`
+function render() {
+  const list = getCandidates();
+  const arr = now == "all" ? list : list.filter(i => i.category == now);
+  document.getElementById("list").innerHTML = arr.map(i => `
     <div class="card">
       <h3>${i.name}</h3>
       <p>${i.category}</p>
@@ -96,19 +107,28 @@ function render(){
   `).join("");
 }
 
-function doVote(id){
-  if(!user){msg("请先登录","error");return}
-  msg("投票成功","success");
-  candidates.find(x=>x.id==id).votes++;
+function doVote(id) {
+  if (!user) { msg("请先登录", "error"); return; }
+  const records = getRecords();
+  const exists = records.some(r => r.user == user && r.candidateId == id);
+  if (exists) { msg("你已经投过此人", "error"); return; }
+
+  const list = getCandidates();
+  const item = list.find(x => x.id == id);
+  item.votes++;
+  saveCandidates(list);
+  saveRecord(user, id);
+  msg("投票成功", "success");
   render();
 }
 
-function msg(t,c){
-  const s=document.getElementById("status");
-  s.textContent=t;s.className=c;s.style.display="block";
-  setTimeout(()=>s.style.display="none",2000);
+function msg(t, c) {
+  const s = document.getElementById("status");
+  s.textContent = t; s.className = c; s.style.display = "block";
+  setTimeout(() => s.style.display = "none", 2000);
 }
-</script>
 
+render();
+</script>
 </body>
 </html>
