@@ -74,7 +74,7 @@ button:hover{background:#218838}
       <option>文体之星</option>
     </select>
     <input id="ccol" placeholder="学院">
-    <button onclick="addCandidate()">添加</button>
+    <button onclick="addCandidate()">添加候选人</button>
 
     <h2>② 分类票数统计</h2>
     <div id="categoryStat"></div>
@@ -85,79 +85,58 @@ button:hover{background:#218838}
     <h2>④ 投票记录</h2>
     <div id="rList"></div>
 
-    <br/>
+    <br>
     <button class="warning" onclick="resetAllVotes()">一键重置票数</button>
     <button onclick="exportExcel()">导出 Excel</button>
     <button class="danger" onclick="clearAll()">清空所有数据</button>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sql.js-wasm/sql-wasm.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const API = "https://vote.123456api.com/api";
+// ===================== 已自动填入你的云配置 =====================
+const SUPABASE_URL = "https://xttxhcalaqwltufhmfji.supabase.co";
+const SUPABASE_KEY = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
 
-let user = null;
-let now = "all";
+const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
 const ADMIN_PWD = "123456";
 
-function msg(t,c){
-  let s=document.getElementById("status");
-  s.textContent=t;s.className=c;s.style.display="block";
-  setTimeout(()=>s.style.display="none",2000);
+let currentUser = null;
+let currentTab = "all";
+
+// 消息提示
+function msg(text, cls) {
+  let s = document.getElementById("status");
+  s.textContent = text;
+  s.className = cls;
+  s.style.display = "block";
+  setTimeout(() => s.style.display = "none", 2000);
 }
 
-async function getCandidates(){
-  let res=await axios.get(API+"/candidates");
-  return res.data;
-}
-
-async function getRecords(){
-  let res=await axios.get(API+"/records");
-  return res.data;
-}
-
-async function addRecord(user,cid){
-  await axios.post(API+"/record",{user,cid});
-}
-
-async function addCandidate(name,category,college){
-  await axios.post(API+"/candidate",{name,category,college});
-}
-
-async function delCandidate(id){
-  await axios.delete(API+"/candidate/"+id);
-}
-
-async function resetVotes(){
-  await axios.post(API+"/reset");
-}
-
-async function clearAllData(){
-  await axios.post(API+"/clear");
-}
-
-async function login(){
-  let n=document.getElementById("name").value.trim();
-  let s=document.getElementById("stuId").value.trim();
-  if(!n||!s){msg("请填写姓名学号","error");return;}
-  user=n+"_"+s;
-  document.getElementById("voteArea").style.display="block";
-  msg("登录成功","success");
+// 登录
+function login() {
+  const name = document.getElementById("name").value.trim();
+  const stuId = document.getElementById("stuId").value.trim();
+  if (!name || !stuId) return msg("请填写姓名学号", "error");
+  currentUser = name + "_" + stuId;
+  document.getElementById("voteArea").style.display = "block";
+  msg("登录成功", "success");
   renderVote();
 }
 
-function tab(cat){
-  now=cat;
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+// 切换分类
+function tab(cat) {
+  currentTab = cat;
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   event.target.classList.add("active");
   renderVote();
 }
 
-async function renderVote(){
-  let list=await getCandidates();
-  let arr=now=="all"?list:list.filter(i=>i.category==now);
-  document.getElementById("list").innerHTML=arr.map(i=>`
+// 渲染投票页
+async function renderVote() {
+  const { data: list } = await supabase.from("candidates").select("*");
+  const arr = currentTab === "all" ? list : list.filter(i => i.category === currentTab);
+  document.getElementById("list").innerHTML = arr.map(i => `
     <div class="card">
       <h3>${i.name}</h3>
       <p>${i.category}</p>
@@ -168,89 +147,114 @@ async function renderVote(){
   `).join("");
 }
 
-async function doVote(id){
-  if(!user){msg("请先登录","error");return;}
-  let records=await getRecords();
-  let has=records.some(r=>r.user==user&&r.cid==id);
-  if(has){msg("你已投过此人","error");return;}
-  await addRecord(user,id);
-  msg("投票成功","success");
+// 投票
+async function doVote(cid) {
+  if (!currentUser) return msg("请先登录", "error");
+
+  const { data: has } = await supabase
+    .from("records")
+    .select("*")
+    .eq("user", currentUser)
+    .eq("cid", cid);
+
+  if (has.length > 0) return msg("你已投过此人", "error");
+
+  await supabase.from("records").insert([{ user: currentUser, cid }]);
+  await supabase.rpc("inc_vote", { cid });
+
+  msg("投票成功", "success");
   renderVote();
 }
 
-function showAdmin(){
-  let p=document.getElementById("adminPwd").value;
-  if(p!==ADMIN_PWD){msg("密码错误","error");return;}
-  document.getElementById("adminArea").style.display="block";
-  msg("后台已解锁","success");
+// 显示后台
+function showAdmin() {
+  const p = document.getElementById("adminPwd").value;
+  if (p !== ADMIN_PWD) return msg("密码错误", "error");
+  document.getElementById("adminArea").style.display = "block";
+  msg("后台已解锁", "success");
   renderAdmin();
 }
 
-async function renderAdmin(){
-  let candidates=await getCandidates();
-  let records=await getRecords();
-  candidates.sort((a,b)=>b.votes-a.votes);
+// 渲染后台
+async function renderAdmin() {
+  const { data: candidates } = await supabase.from("candidates").select("*");
+  const { data: records } = await supabase.from("records").select("*");
+  candidates.sort((a, b) => b.votes - a.votes);
 
-  let catMap={};
-  candidates.forEach(i=>{
-    if(!catMap[i.category])catMap[i.category]={c:0,t:0};
+  // 分类统计
+  const catMap = {};
+  candidates.forEach(i => {
+    if (!catMap[i.category]) catMap[i.category] = { c: 0, t: 0 };
     catMap[i.category].c++;
-    catMap[i.category].t+=i.votes;
+    catMap[i.category].t += i.votes;
   });
 
-  let statHtml="";
-  for(let k in catMap){
-    statHtml+=`<div class="stat-item">${k}：${catMap[k].c}人｜总票数${catMap[k].t}</div>`;
+  let statHtml = "";
+  for (let k in catMap) {
+    statHtml += `<div class="stat-item">${k}：${catMap[k].c}人｜总票数${catMap[k].t}</div>`;
   }
-  document.getElementById("categoryStat").innerHTML=statHtml;
+  document.getElementById("categoryStat").innerHTML = statHtml;
 
-  document.getElementById("cList").innerHTML=candidates.map(i=>`
+  // 候选人列表
+  document.getElementById("cList").innerHTML = candidates.map(i => `
     <div class="admin-card">
       <div>${i.name}｜${i.category}｜${i.college}｜票：${i.votes}</div>
       <button class="danger" onclick="delC(${i.id})">删除</button>
     </div>
   `).join("");
 
-   document.getElementById("rList").innerHTML=records.map(r=>`
+  // 投票记录
+  document.getElementById("rList").innerHTML = records.map(r => `
      <div class="row"><span>${r.user}</span><span>${r.time}</span></div>
    `).join("");
  }
- async function addCandidate(){
-   let n=document.getElementById("cname").value.trim();
-   let t=document.getElementById("ccat").value;
-   let c=document.getElementById("ccol").value.trim();
-   if(!n)return;
-   await addCandidate(n,t,c);
+ // 添加候选人
+ async function addCandidate() {
+   const name = document.getElementById("cname").value.trim();
+   const category = document.getElementById("ccat").value;
+   const college = document.getElementById("ccol").value.trim();
+   if (!name) return;
+   const { error } = await supabase.from("candidates").insert([{ name, category, college }]);
+   if (error) alert(error.message);
    renderAdmin();
    renderVote();
  }
- async function delC(id){
-   await delCandidate(id);
+ // 删除候选人
+ async function delC(id) {
+   await supabase.from("candidates").delete().eq("id", id);
+   await supabase.from("records").delete().eq("cid", id);
    renderAdmin();
    renderVote();
  }
- async function resetAllVotes(){
-   if(!confirm("确定重置所有票数？"))return;
-   await resetVotes();
+ // 重置票数
+ async function resetAllVotes() {
+   if (!confirm("确定重置所有票数？")) return;
+   const { data: list } = await supabase.from("candidates").select("id");
+   for (let item of list) {
+     await supabase.from("candidates").update({ votes: 0 }).eq("id", item.id);
+   }
    renderAdmin();
    renderVote();
  }
- async function exportExcel(){
-   let list=await getCandidates();
-   list.sort((a,b)=>b.votes-a.votes);
-   let csv="排名,姓名,类别,学院,票数\n";
-   list.forEach((i,idx)=>{
-     csv+=`${idx+1},${i.name},${i.category},${i.college},${i.votes}\n`;
+ // 导出 Excel
+ async function exportExcel() {
+   const { data: list } = await supabase.from("candidates").select("*");
+   list.sort((a, b) => b.votes - a.votes);
+   let csv = "排名,姓名,类别,学院,票数\n";
+   list.forEach((i, idx) => {
+     csv += `${idx+1},${i.name},${i.category},${i.college},${i.votes}\n`;
    });
-   let blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
-   let a=document.createElement("a");
-   a.href=URL.createObjectURL(blob);
-   a.download="莞工之星投票结果.csv";
+   const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+   const a = document.createElement("a");
+   a.href = URL.createObjectURL(blob);
+   a.download = "莞工之星投票结果.csv";
    a.click();
  }
- async function clearAll(){
-   if(!confirm("确定清空所有数据？不可恢复！"))return;
-   await clearAllData();
+ // 清空所有
+ async function clearAll() {
+   if (!confirm("确定清空所有数据？不可恢复！")) return;
+   await supabase.from("records").delete().neq("id", 0);
+   await supabase.from("candidates").delete().neq("id", 0);
    location.reload();
  }
  renderVote();
