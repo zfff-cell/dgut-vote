@@ -98,6 +98,10 @@ button:hover {
   width: 100%;
   margin-top: 10px;
 }
+.card button:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
 #status {
   text-align: center;
   padding: 10px;
@@ -211,13 +215,13 @@ button:hover {
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// Supabase 配置（已填好你的专属信息）
+// 你的专属 Supabase 配置（已填好）
 const SUPABASE_URL = "https://xttxhcalaqwltufhmfji.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
 
-// 初始化 Supabase（仅定义一次，无重复）
-const supabase = window.supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
-const ADMIN_PWD = "123456"; // 管理员密码
+// 正确初始化 Supabase
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const ADMIN_PWD = "123456"; // 管理员密码（可自行修改）
 
 let currentUser = null;
 let currentTab = "all";
@@ -256,15 +260,47 @@ function tab(cat) {
   document.querySelectorAll(".tab").forEach(tabEl => {
     tabEl.classList.remove("active");
   });
-  event.target.classList.add("active");
+  // 修复event.target可能为空的问题
+  const activeTab = document.querySelector(`.tab[onclick="tab('${cat}')"]`);
+  if (activeTab) activeTab.classList.add("active");
   // 重新渲染列表
   renderVoteList();
 }
 
+// 检查用户是否已对该分类投过票
+async function checkCategoryVote(cid, category) {
+  try {
+    // 获取该用户的所有投票记录
+    const { data: userVotes } = await supabase
+      .from("records")
+      .select("cid")
+      .eq("user_key", currentUser);
+
+    if (!userVotes || userVotes.length === 0) return false;
+
+    // 获取该分类下所有候选人ID
+    const { data: categoryCandidates } = await supabase
+      .from("candidates")
+      .select("id")
+      .eq("category", category);
+
+    const categoryIds = categoryCandidates.map(item => item.id);
+    
+    // 检查用户是否已投过该分类的候选人
+    return userVotes.some(vote => categoryIds.includes(vote.cid));
+  } catch (error) {
+    console.error("检查分类投票错误：", error);
+    return false;
+  }
+}
+
 // 渲染投票候选人列表
 async function renderVoteList() {
+  if (!currentUser) return;
+  
   try {
-    const { data: candidates } = await supabase.from("candidates").select("*");
+    const { data: candidates, error } = await supabase.from("candidates").select("*");
+    if (error) throw error;
     if (!candidates) return;
 
     // 筛选分类
@@ -272,16 +308,34 @@ async function renderVoteList() {
       ? candidates 
       : candidates.filter(item => item.category === currentTab);
 
-    // 渲染HTML
-    document.getElementById("list").innerHTML = filteredList.map(item => `
-      <div class="card">
-        <h3>${item.name}</h3>
-        <p>${item.category}</p>
-        <p>${item.college}</p>
-        <p>票数：${item.votes || 0}</p>
-        <button onclick="castVote(${item.id})">投票</button>
-      </div>
-    `).join("");
+    // 渲染HTML（异步处理投票状态）
+    let listHtml = "";
+    for (const item of filteredList) {
+      // 检查是否已投过该候选人
+      const { data: existingVote } = await supabase
+        .from("records")
+        .select("*")
+        .eq("user_key", currentUser)
+        .eq("cid", item.id);
+      
+      // 检查是否已投过该分类
+      const hasVotedCategory = await checkCategoryVote(item.id, item.category);
+      
+      const isDisabled = existingVote && existingVote.length > 0 || hasVotedCategory;
+      const btnText = isDisabled ? "已投票" : "投票";
+      
+      listHtml += `
+        <div class="card">
+          <h3>${item.name}</h3>
+          <p>${item.category}</p>
+          <p>${item.college}</p>
+          <p>票数：${item.votes || 0}</p>
+          <button onclick="castVote(${item.id}, '${item.category}')" ${isDisabled ? "disabled" : ""}>${btnText}</button>
+        </div>
+      `;
+    }
+    
+    document.getElementById("list").innerHTML = listHtml;
   } catch (error) {
     msg("加载候选人失败", "error");
     console.error("加载候选人错误：", error);
@@ -289,14 +343,21 @@ async function renderVoteList() {
 }
 
 // 执行投票
-async function castVote(cid) {
+async function castVote(cid, category) {
   if (!currentUser) {
     msg("请先登录", "error");
     return;
   }
 
   try {
-    // 检查是否已投票
+    // 检查是否已对该分类投过票
+    const hasVotedCategory = await checkCategoryVote(cid, category);
+    if (hasVotedCategory) {
+      msg("你已为该类别投过票", "error");
+      return;
+    }
+
+    // 检查是否已投票给该候选人
     const { data: existingVote } = await supabase
       .from("records")
       .select("*")
@@ -308,14 +369,29 @@ async function castVote(cid) {
       return;
     }
 
-    // 记录投票
-    await supabase.from("records").insert([{
+    // 记录投票（添加时间字段）
+    const { error: recordError } = await supabase.from("records").insert([{
       user_key: currentUser,
-      cid: cid
+      cid: cid,
+      time: new Date().toISOString() // 添加时间字段
     }]);
+    
+    if (recordError) throw recordError;
 
-    // 更新票数
-    await supabase.rpc("inc_vote", { cid: cid });
+    // 更新票数（直接更新，不依赖自定义函数）
+    const { data: candidate } = await supabase
+      .from("candidates")
+      .select("votes")
+      .eq("id", cid)
+      .single();
+      
+    const newVotes = (candidate.votes || 0) + 1;
+    const { error: voteError } = await supabase
+      .from("candidates")
+      .update({ votes: newVotes })
+      .eq("id", cid);
+      
+    if (voteError) throw voteError;
 
     msg("投票成功", "success");
     renderVoteList();
@@ -345,8 +421,11 @@ function showAdmin() {
 async function renderAdminPanel() {
   try {
     // 获取所有数据
-    const { data: candidates } = await supabase.from("candidates").select("*");
-    const { data: records } = await supabase.from("records").select("*");
+    const { data: candidates, error: candError } = await supabase.from("candidates").select("*");
+    const { data: records, error: recordError } = await supabase.from("records").select("*");
+    
+    if (candError) throw candError;
+    if (recordError) throw recordError;
 
     if (!candidates) return;
 
@@ -378,12 +457,12 @@ async function renderAdminPanel() {
       </div>
     `).join("");
 
-    // 渲染投票记录
+    // 渲染投票记录（处理时间字段）
     document.getElementById("rList").innerHTML = records && records.length > 0 
       ? records.map(record => `
           <div class="row">
-            <span>${record.user_key}</span>
-            <span>${new Date(record.time).toLocaleString()}</span>
+            <span>${record.user_key || '未知用户'}</span>
+            <span>${record.time ? new Date(record.time).toLocaleString() : '无时间记录'}</span>
           </div>
         `).join("")
       : "<div class='stat-item'>暂无投票记录</div>";
@@ -406,12 +485,14 @@ async function addCandidate() {
   }
 
   try {
-    await supabase.from("candidates").insert([{
+    const { error } = await supabase.from("candidates").insert([{
       name: name,
       category: category,
-      college: college,
+      college: college || '未填写', // 处理空学院
       votes: 0
     }]);
+    
+    if (error) throw error;
 
     msg("候选人添加成功", "success");
     // 清空输入框
@@ -433,10 +514,13 @@ async function deleteCandidate(id) {
   }
 
   try {
-    // 删除候选人
-    await supabase.from("candidates").delete().eq("id", id);
     // 删除相关投票记录
-    await supabase.from("records").delete().eq("cid", id);
+    const { error: recordError } = await supabase.from("records").delete().eq("cid", id);
+    if (recordError) throw recordError;
+    
+    // 删除候选人
+    const { error: candError } = await supabase.from("candidates").delete().eq("id", id);
+    if (candError) throw candError;
 
     msg("候选人删除成功", "success");
     // 重新渲染
@@ -455,12 +539,14 @@ async function resetAllVotes() {
   }
 
   try {
-    const { data: candidates } = await supabase.from("candidates").select("id");
+    const { data: candidates, error: candError } = await supabase.from("candidates").select("id");
+    if (candError) throw candError;
     if (!candidates) return;
 
     // 批量重置票数
     for (const candidate of candidates) {
-      await supabase.from("candidates").update({ votes: 0 }).eq("id", candidate.id);
+      const { error } = await supabase.from("candidates").update({ votes: 0 }).eq("id", candidate.id);
+      if (error) throw error;
     }
 
     msg("所有票数已重置", "success");
@@ -475,7 +561,9 @@ async function resetAllVotes() {
 // 导出Excel（CSV格式）
 async function exportExcel() {
   try {
-    const { data: candidates } = await supabase.from("candidates").select("*");
+    const { data: candidates, error } = await supabase.from("candidates").select("*");
+    if (error) throw error;
+    
     if (!candidates || candidates.length === 0) {
       msg("暂无数据可导出", "error");
       return;
@@ -484,10 +572,10 @@ async function exportExcel() {
     // 按票数排序
     candidates.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
-    // 构建CSV内容
+    // 构建CSV内容（处理中文编码）
     let csvContent = "\uFEFF排名,姓名,类别,学院,票数\n";
     candidates.forEach((item, index) => {
-      csvContent += `${index + 1},${item.name},${item.category},${item.college},${item.votes || 0}\n`;
+      csvContent += `${index + 1},${item.name},${item.category},${item.college || '未填写'},${item.votes || 0}\n`;
     });
 
     // 创建下载链接
@@ -516,9 +604,12 @@ async function clearAll() {
 
   try {
     // 清空投票记录
-    await supabase.from("records").delete().neq("id", 0);
+    const { error: recordError } = await supabase.from("records").delete().neq("id", 0);
+    if (recordError) throw recordError;
+    
     // 清空候选人
-    await supabase.from("candidates").delete().neq("id", 0);
+    const { error: candError } = await supabase.from("candidates").delete().neq("id", 0);
+    if (candError) throw candError;
 
     msg("所有数据已清空", "success");
     // 刷新页面
@@ -531,7 +622,7 @@ async function clearAll() {
 
 // 页面加载完成后初始化
 window.onload = function() {
-  renderVoteList();
+  console.log("莞工之星投票系统初始化完成");
 };
 </script>
 </body>
