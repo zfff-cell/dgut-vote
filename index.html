@@ -3,474 +3,306 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>莞工之星投票系统</title>
+<title>莞工之星 - 投票系统</title>
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
-}
-body {
-  background: #e8f5e9;
-  padding: 15px;
-}
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  background: white;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(0,128,0,0.06);
-}
-.header {
-  text-align: center;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #28a745;
-}
-h1 {
-  color: #28a745;
-  font-size: 22px;
-}
-h2 {
-  font-size: 18px;
-  margin: 20px 0 10px;
-  color: #226633;
-  border-left: 4px solid #28a745;
-  padding-left: 10px;
-}
-.login-box {
-  margin: 20px 0;
-  text-align: center;
-}
-input, select {
-  padding: 10px 12px;
-  margin: 5px;
-  border-radius: 6px;
-  border: 1px solid #c3e6cb;
-  outline: none;
-}
-button {
-  padding: 10px 14px;
-  margin: 5px;
-  border-radius: 6px;
-  border: none;
-  background: #28a745;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
-}
-button:hover {
-  background: #218838;
-}
-.tab-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 20px 0;
-  justify-content: center;
-}
-.tab {
-  padding: 10px 16px;
-  border: 1px solid #28a745;
-  border-radius: 20px;
-  background: white;
-  color: #28a745;
-}
-.tab.active {
-  background: #28a745;
-  color: white;
-}
-.list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 15px;
-  margin: 20px 0;
-}
-.card {
-  border: 1px solid #d4edda;
-  background: #fafffc;
-  border-radius: 8px;
-  padding: 15px;
-  text-align: center;
-}
-.card button {
-  width: 100%;
-  margin-top: 10px;
-}
-.card button:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-}
-#status {
-  text-align: center;
-  padding: 10px;
-  margin: 10px 0;
-  display: none;
-}
-.success {
-  background: #d4edda;
-  color: #155724;
-}
-.error {
-  background: #f8d7da;
-  color: #721c24;
-}
-.stat-item {
-  padding: 10px;
-  background: #f0fff4;
-  border-radius: 6px;
-  margin: 6px 0;
-  border-left: 3px solid #28a745;
-}
-.admin-card {
-  border: 1px solid #d4edda;
-  background: #fafffc;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.warning {
-  background: #ffc107;
-  color: #333;
-}
-.danger {
-  background: #dc3545;
-}
-.row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  border-bottom: 1px solid #e6ffe6;
-}
-.admin {
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 2px solid #28a745;
-}
+:root { --green:#28a745; --light:#e8f5e9; --dark:#1e7e34; --red:#dc3545; }
+* { box-sizing:border-box; margin:0; padding:0; font-family:"Microsoft YaHei",sans-serif; }
+body { background:var(--light); padding:15px; }
+.container { max-width:900px; margin:0 auto; background:white; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+.header { text-align:center; padding-bottom:15px; border-bottom:2px solid var(--green); }
+.logo { width:80px; margin-bottom:10px; }
+h1 { color:var(--green); font-size:22px; margin:10px 0 5px; }
+.login-box { margin:20px 0; text-align:center; }
+input { padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; margin:5px; width:180px; }
+button { padding:10px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; background:var(--green); color:white; margin:5px; }
+button:disabled { background:#ccc; cursor:not-allowed; }
+.tab-group { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; justify-content:center; }
+.tab { padding:8px 14px; border:1px solid var(--green); border-radius:20px; background:white; color:var(--green); cursor:pointer; }
+.tab.active { background:var(--green); color:white; }
+.list { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:15px; margin:20px 0; }
+.card { border:1px solid #ddd; border-radius:8px; padding:15px; text-align:center; }
+.card h3 { margin-bottom:6px; font-size:17px; }
+.card p { color:#666; font-size:14px; margin-bottom:8px; }
+#status { text-align:center; padding:10px; border-radius:6px; margin:10px 0; display:none; }
+.success { background:#d4edda; color:#155724; }
+.error { background:#f8d7da; color:#721c24; }
+.rank { margin-top:30px; padding-top:20px; border-top:2px solid var(--light); }
+.rank h2 { color:var(--green); text-align:center; margin-bottom:15px; font-size:20px; }
+.rank-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; }
+/* 管理员样式 */
+.admin-area { margin-top:20px; padding-top:20px; border-top:2px solid var(--light); }
+.admin-area h2 { color:var(--green); text-align:center; margin-bottom:15px; font-size:18px; }
+.admin-inputs { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-bottom:15px; }
+.admin-btn { background:var(--dark); }
+.danger-btn { background:var(--red); }
 </style>
 </head>
 <body>
-
 <div class="container">
   <div class="header">
+    <!-- 校徽 Logo -->
+    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/30a2e66a0a5a442e9a0e0481020a70a0~tplv-a9rns2rl98-image.image" class="logo" alt="东莞理工学院校徽">
     <h1>莞工之星 · 投票系统</h1>
-    <p>每人每类限投一次</p>
+    <p>一个姓名只能对应一个学号，每个类别限投1次</p>
   </div>
 
   <div id="status"></div>
 
   <div class="login-box">
     <input id="name" placeholder="姓名">
-    <input id="stuId" placeholder="学号">
-    <button onclick="login()">确认身份</button>
-    <br/>
-    <input type="password" id="adminPwd" placeholder="管理员密码" style="width:140px">
-    <button onclick="showAdmin()">进入后台</button>
+    <input id="stuId" placeholder="学号" type="number">
+    <button onclick="userLogin()">确认身份</button>
+    <br>
+    <!-- 管理员入口 -->
+    <input type="password" id="adminPwd" placeholder="管理员密码" style="width:140px;">
+    <button onclick="showAdmin()">管理员入口</button>
   </div>
 
   <div id="voteArea" style="display:none;">
     <div class="tab-group">
-      <div class="tab active" onclick="tab('all')">全部</div>
-      <div class="tab" onclick="tab('自强之星')">自强之星</div>
-      <div class="tab" onclick="tab('志愿之星')">志愿之星</div>
-      <div class="tab" onclick="tab('团队之星')">团队之星</div>
-      <div class="tab" onclick="tab('学术之星')">学术之星</div>
-      <div class="tab" onclick="tab('文体之星')">文体之星</div>
+      <button class="tab active" onclick="show('all')">全部</button>
+      <button class="tab" onclick="show('自强之星')">自强之星</button>
+      <button class="tab" onclick="show('志愿之星')">志愿之星</button>
+      <button class="tab" onclick="show('团队之星')">团队之星</button>
+      <button class="tab" onclick="show('学术之星')">学术之星</button>
+      <button class="tab" onclick="show('文体之星')">文体之星</button>
     </div>
+
     <div class="list" id="list"></div>
+
+    <div class="rank">
+      <h2>实时票数排行</h2>
+      <div id="rankList"></div>
+    </div>
   </div>
 
-  <div id="adminArea" class="admin" style="display:none;">
-    <h2>① 添加候选人</h2>
-    <input id="cname" placeholder="姓名">
-    <select id="ccat">
-      <option>自强之星</option>
-      <option>志愿之星</option>
-      <option>团队之星</option>
-      <option>学术之星</option>
-      <option>文体之星</option>
-    </select>
-    <input id="ccol" placeholder="学院">
-    <button onclick="addCandidate()">添加候选人</button>
-
-    <h2>② 分类票数统计</h2>
-    <div id="categoryStat"></div>
-
-    <h2>③ 候选人排行</h2>
-    <div id="cList"></div>
-
-    <h2>④ 投票记录</h2>
-    <div id="rList"></div>
-
-    <br>
-    <button class="warning" onclick="resetAllVotes()">一键重置票数</button>
-    <button onclick="exportExcel()">导出 Excel</button>
-    <button class="danger" onclick="clearAll()">清空所有数据</button>
+  <!-- 管理员区域 -->
+  <div id="adminArea" class="admin-area" style="display:none;">
+    <h2>管理员后台 - 添加候选人</h2>
+    <div class="admin-inputs">
+      <input id="cname" placeholder="候选人姓名">
+      <select id="ccat">
+        <option>自强之星</option>
+        <option>志愿之星</option>
+        <option>团队之星</option>
+        <option>学术之星</option>
+        <option>文体之星</option>
+      </select>
+      <input id="ccol" placeholder="学院">
+      <button class="admin-btn" onclick="addCandidate()">添加候选人</button>
+    </div>
+    <button class="danger-btn" onclick="exportVoteData()">导出投票数据</button>
   </div>
 </div>
 
+<!-- 引入Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// 你的专属 Supabase 配置（已填好）
+// ====================== Supabase 配置（你的专属信息）======================
 const SUPABASE_URL = "https://xttxhcalaqwltufhmfji.supabase.co";
 const SUPABASE_KEY = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
+const ADMIN_PASSWORD = "123456"; // 管理员密码（可自行修改）
 
-// 正确初始化 Supabase
+// 初始化Supabase
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const ADMIN_PWD = "123456"; // 管理员密码（可自行修改）
 
-let currentUser = null;
-let currentTab = "all";
+// ====================== 全局变量 ======================
+let currentUser = null; // 当前登录用户：姓名_学号
+let nowCat = "all";     // 当前选中的分类
 
-// 消息提示函数
-function msg(text, cls) {
-  const statusEl = document.getElementById("status");
-  statusEl.textContent = text;
-  statusEl.className = cls;
-  statusEl.style.display = "block";
-  setTimeout(() => {
-    statusEl.style.display = "none";
-  }, 2000);
+// ====================== 消息提示 ======================
+function showMsg(text, type) {
+  const s = document.getElementById("status");
+  s.textContent = text;
+  s.className = type;
+  s.style.display = "block";
+  setTimeout(()=>s.style.display="none",2500);
 }
 
-// 用户登录函数
-function login() {
+// ====================== 登录校验（对接Supabase）======================
+async function userLogin() {
   const name = document.getElementById("name").value.trim();
   const stuId = document.getElementById("stuId").value.trim();
   
   if (!name || !stuId) {
-    msg("请填写姓名和学号", "error");
+    showMsg("请填写完整姓名和学号", "error");
     return;
   }
 
-  currentUser = name + "_" + stuId;
-  document.getElementById("voteArea").style.display = "block";
-  msg("登录成功", "success");
-  renderVoteList();
-}
-
-// 切换投票分类
-function tab(cat) {
-  currentTab = cat;
-  // 更新标签样式
-  document.querySelectorAll(".tab").forEach(tabEl => {
-    tabEl.classList.remove("active");
-  });
-  // 修复event.target可能为空的问题
-  const activeTab = document.querySelector(`.tab[onclick="tab('${cat}')"]`);
-  if (activeTab) activeTab.classList.add("active");
-  // 重新渲染列表
-  renderVoteList();
-}
-
-// 检查用户是否已对该分类投过票
-async function checkCategoryVote(cid, category) {
   try {
-    // 获取该用户的所有投票记录
-    const { data: userVotes } = await supabase
-      .from("records")
-      .select("cid")
+    // 1. 检查账号绑定（从Supabase获取）
+    const { data: accounts } = await supabase
+      .from("vote_accounts")
+      .select("*")
+      .or(`name.eq.${name},stu_id.eq.${stuId}`);
+
+    // 检查姓名是否绑定其他学号
+    const nameExist = accounts.find(item => item.name === name);
+    if (nameExist && nameExist.stu_id !== stuId) {
+      showMsg("该姓名已绑定其他学号，无法使用当前学号投票", "error");
+      return;
+    }
+
+    // 检查学号是否绑定其他姓名
+    const idExist = accounts.find(item => item.stu_id === stuId);
+    if (idExist && idExist.name !== name) {
+      showMsg("该学号已绑定其他姓名，无法使用当前姓名投票", "error");
+      return;
+    }
+
+    // 2. 绑定新账号（如果不存在）
+    if (!nameExist && !idExist) {
+      await supabase.from("vote_accounts").insert([{
+        name: name,
+        stu_id: stuId,
+        create_time: new Date().toISOString()
+      }]);
+    }
+
+    // 3. 登录成功
+    currentUser = `${name}_${stuId}`;
+    document.getElementById("voteArea").style.display = "block";
+    await show("all"); // 加载候选人列表
+    showMsg("身份确认成功，可以开始投票", "success");
+  } catch (error) {
+    console.error("登录失败：", error);
+    showMsg("登录失败，请稍后重试", "error");
+  }
+}
+
+// ====================== 加载候选人（从Supabase获取）======================
+async function show(cat) {
+  nowCat = cat;
+  try {
+    // 1. 获取所有候选人
+    const { data: candidates } = await supabase
+      .from("vote_candidates")
+      .select("*")
+      .order("votes", { ascending: false });
+
+    if (!candidates || candidates.length === 0) {
+      document.getElementById("list").innerHTML = "<div style='text-align:center;padding:20px;'>暂无候选人</div>";
+      renderRank([]);
+      return;
+    }
+
+    // 2. 筛选分类
+    const showList = cat === "all" ? candidates : candidates.filter(i => i.category === cat);
+    
+    // 3. 获取当前用户的投票记录
+    const { data: records } = await supabase
+      .from("vote_records")
+      .select("*")
       .eq("user_key", currentUser);
 
-    if (!userVotes || userVotes.length === 0) return false;
+    const userRec = {};
+    if (records && records.length > 0) {
+      records.forEach(item => {
+        userRec[item.category] = item.candidate_id;
+      });
+    }
 
-    // 获取该分类下所有候选人ID
-    const { data: categoryCandidates } = await supabase
-      .from("candidates")
-      .select("id")
-      .eq("category", category);
-
-    const categoryIds = categoryCandidates.map(item => item.id);
-    
-    // 检查用户是否已投过该分类的候选人
-    return userVotes.some(vote => categoryIds.includes(vote.cid));
-  } catch (error) {
-    console.error("检查分类投票错误：", error);
-    return false;
-  }
-}
-
-// 渲染投票候选人列表
-async function renderVoteList() {
-  if (!currentUser) return;
-  
-  try {
-    const { data: candidates, error } = await supabase.from("candidates").select("*");
-    if (error) throw error;
-    if (!candidates) return;
-
-    // 筛选分类
-    const filteredList = currentTab === "all" 
-      ? candidates 
-      : candidates.filter(item => item.category === currentTab);
-
-    // 渲染HTML（异步处理投票状态）
-    let listHtml = "";
-    for (const item of filteredList) {
-      // 检查是否已投过该候选人
-      const { data: existingVote } = await supabase
-        .from("records")
-        .select("*")
-        .eq("user_key", currentUser)
-        .eq("cid", item.id);
-      
-      // 检查是否已投过该分类
-      const hasVotedCategory = await checkCategoryVote(item.id, item.category);
-      
-      const isDisabled = existingVote && existingVote.length > 0 || hasVotedCategory;
-      const btnText = isDisabled ? "已投票" : "投票";
-      
-      listHtml += `
+    // 4. 渲染候选人列表
+    document.getElementById("list").innerHTML = showList.map(i => {
+      const voted = userRec[i.category] === i.id;
+      return `
         <div class="card">
-          <h3>${item.name}</h3>
-          <p>${item.category}</p>
-          <p>${item.college}</p>
-          <p>票数：${item.votes || 0}</p>
-          <button onclick="castVote(${item.id}, '${item.category}')" ${isDisabled ? "disabled" : ""}>${btnText}</button>
+          <h3>${i.name}</h3>
+          <p>${i.category}</p>
+          <p>${i.college}</p>
+          <p>票数：${i.votes || 0}</p>
+          <button ${voted?"disabled":""} onclick="doVote('${i.id}','${i.category}')">
+            ${voted?"已投":"投票"}
+          </button>
         </div>
       `;
-    }
-    
-    document.getElementById("list").innerHTML = listHtml;
+    }).join("");
+
+    // 5. 渲染排行
+    renderRank(candidates);
   } catch (error) {
-    msg("加载候选人失败", "error");
-    console.error("加载候选人错误：", error);
+    console.error("加载候选人失败：", error);
+    showMsg("加载数据失败，请稍后重试", "error");
   }
 }
 
-// 执行投票
-async function castVote(cid, category) {
+// ====================== 投票核心逻辑（对接Supabase）======================
+async function doVote(candidateId, category) {
   if (!currentUser) {
-    msg("请先登录", "error");
+    showMsg("请先确认身份", "error");
     return;
   }
 
   try {
-    // 检查是否已对该分类投过票
-    const hasVotedCategory = await checkCategoryVote(cid, category);
-    if (hasVotedCategory) {
-      msg("你已为该类别投过票", "error");
-      return;
-    }
-
-    // 检查是否已投票给该候选人
-    const { data: existingVote } = await supabase
-      .from("records")
+    // 1. 检查是否已投该类别
+    const { data: existRecord } = await supabase
+      .from("vote_records")
       .select("*")
       .eq("user_key", currentUser)
-      .eq("cid", cid);
+      .eq("category", category);
 
-    if (existingVote && existingVote.length > 0) {
-      msg("你已为该候选人投票", "error");
+    if (existRecord && existRecord.length > 0) {
+      showMsg("该类别你已投过，不能重复投票", "error");
       return;
     }
 
-    // 记录投票（添加时间字段）
-    const { error: recordError } = await supabase.from("records").insert([{
+    // 2. 记录投票记录
+    await supabase.from("vote_records").insert([{
       user_key: currentUser,
-      cid: cid,
-      time: new Date().toISOString() // 添加时间字段
+      candidate_id: candidateId,
+      category: category,
+      vote_time: new Date().toISOString()
     }]);
-    
-    if (recordError) throw recordError;
 
-    // 更新票数（直接更新，不依赖自定义函数）
+    // 3. 更新候选人票数
     const { data: candidate } = await supabase
-      .from("candidates")
+      .from("vote_candidates")
       .select("votes")
-      .eq("id", cid)
+      .eq("id", candidateId)
       .single();
-      
-    const newVotes = (candidate.votes || 0) + 1;
-    const { error: voteError } = await supabase
-      .from("candidates")
-      .update({ votes: newVotes })
-      .eq("id", cid);
-      
-    if (voteError) throw voteError;
 
-    msg("投票成功", "success");
-    renderVoteList();
+    const newVotes = (candidate.votes || 0) + 1;
+    await supabase
+      .from("vote_candidates")
+      .update({ votes: newVotes })
+      .eq("id", candidateId);
+
+    // 4. 投票成功
+    showMsg("投票成功！", "success");
+    await show(nowCat); // 刷新列表
   } catch (error) {
-    msg("投票失败", "error");
-    console.error("投票错误：", error);
+    console.error("投票失败：", error);
+    showMsg("投票失败，请稍后重试", "error");
   }
 }
 
-// 管理员后台入口
-function showAdmin() {
-  const inputPwd = document.getElementById("adminPwd").value.trim();
-  
-  if (inputPwd !== ADMIN_PWD) {
-    msg("管理员密码错误", "error");
+// ====================== 渲染排行 ======================
+function renderRank(candidates) {
+  if (!candidates || candidates.length === 0) {
+    document.getElementById("rankList").innerHTML = "<div style='text-align:center;padding:10px;'>暂无投票数据</div>";
     return;
   }
 
-  // 显示后台面板
-  document.getElementById("adminArea").style.display = "block";
-  msg("后台已解锁", "success");
-  // 加载后台数据
-  renderAdminPanel();
+  // 按票数降序排序
+  const sortedList = [...candidates].sort((a,b)=>(b.votes||0)-(a.votes||0));
+  document.getElementById("rankList").innerHTML = sortedList.map((i,k)=>`
+    <div class="rank-item">
+      <span>${k+1}. ${i.name}（${i.category}）</span>
+      <span>${i.votes||0} 票</span>
+    </div>
+  `).join("");
 }
 
-// 渲染管理员面板
-async function renderAdminPanel() {
-  try {
-    // 获取所有数据
-    const { data: candidates, error: candError } = await supabase.from("candidates").select("*");
-    const { data: records, error: recordError } = await supabase.from("records").select("*");
-    
-    if (candError) throw candError;
-    if (recordError) throw recordError;
-
-    if (!candidates) return;
-
-    // 按票数排序
-    candidates.sort((a, b) => (b.votes || 0) - (a.votes || 0));
-
-    // 分类统计
-    const categoryStats = {};
-    candidates.forEach(item => {
-      if (!categoryStats[item.category]) {
-        categoryStats[item.category] = { count: 0, totalVotes: 0 };
-      }
-      categoryStats[item.category].count++;
-      categoryStats[item.category].totalVotes += item.votes || 0;
-    });
-
-    // 渲染分类统计
-    let statHtml = "";
-    for (const [category, stats] of Object.entries(categoryStats)) {
-      statHtml += `<div class="stat-item">${category}：${stats.count}人 | 总票数${stats.totalVotes}</div>`;
-    }
-    document.getElementById("categoryStat").innerHTML = statHtml;
-
-    // 渲染候选人列表
-    document.getElementById("cList").innerHTML = candidates.map(item => `
-      <div class="admin-card">
-        <div>${item.name} | ${item.category} | ${item.college} | 票数：${item.votes || 0}</div>
-        <button class="danger" onclick="deleteCandidate(${item.id})">删除</button>
-      </div>
-    `).join("");
-
-    // 渲染投票记录（处理时间字段）
-    document.getElementById("rList").innerHTML = records && records.length > 0 
-      ? records.map(record => `
-          <div class="row">
-            <span>${record.user_key || '未知用户'}</span>
-            <span>${record.time ? new Date(record.time).toLocaleString() : '无时间记录'}</span>
-          </div>
-        `).join("")
-      : "<div class='stat-item'>暂无投票记录</div>";
-
-  } catch (error) {
-    msg("加载后台数据失败", "error");
-    console.error("后台数据加载错误：", error);
+// ====================== 管理员功能 ======================
+// 显示管理员后台
+function showAdmin() {
+  const pwd = document.getElementById("adminPwd").value.trim();
+  if (pwd !== ADMIN_PASSWORD) {
+    showMsg("管理员密码错误", "error");
+    return;
   }
+  document.getElementById("adminArea").style.display = "block";
+  showMsg("管理员后台已打开", "success");
 }
 
 // 添加候选人
@@ -479,151 +311,66 @@ async function addCandidate() {
   const category = document.getElementById("ccat").value;
   const college = document.getElementById("ccol").value.trim();
 
-  if (!name) {
-    msg("请填写候选人姓名", "error");
+  if (!name || !college) {
+    showMsg("请填写姓名和学院", "error");
     return;
   }
 
   try {
-    const { error } = await supabase.from("candidates").insert([{
+    // 生成唯一ID（简化版）
+    const id = Date.now().toString();
+    
+    await supabase.from("vote_candidates").insert([{
+      id: id,
       name: name,
       category: category,
-      college: college || '未填写', // 处理空学院
-      votes: 0
+      college: college,
+      votes: 0,
+      create_time: new Date().toISOString()
     }]);
-    
-    if (error) throw error;
 
-    msg("候选人添加成功", "success");
+    showMsg("候选人添加成功", "success");
     // 清空输入框
     document.getElementById("cname").value = "";
     document.getElementById("ccol").value = "";
-    // 重新渲染
-    renderAdminPanel();
-    renderVoteList();
+    // 刷新列表
+    await show(nowCat);
   } catch (error) {
-    msg("添加候选人失败", "error");
-    console.error("添加候选人错误：", error);
+    console.error("添加候选人失败：", error);
+    showMsg("添加失败，请稍后重试", "error");
   }
 }
 
-// 删除候选人
-async function deleteCandidate(id) {
-  if (!confirm("确定要删除该候选人吗？删除后相关投票记录也会被清除！")) {
-    return;
-  }
-
+// 导出投票数据（CSV格式）
+async function exportVoteData() {
   try {
-    // 删除相关投票记录
-    const { error: recordError } = await supabase.from("records").delete().eq("cid", id);
-    if (recordError) throw recordError;
-    
-    // 删除候选人
-    const { error: candError } = await supabase.from("candidates").delete().eq("id", id);
-    if (candError) throw candError;
+    // 获取所有候选人数据
+    const { data: candidates } = await supabase
+      .from("vote_candidates")
+      .select("*")
+      .order("votes", { ascending: false });
 
-    msg("候选人删除成功", "success");
-    // 重新渲染
-    renderAdminPanel();
-    renderVoteList();
-  } catch (error) {
-    msg("删除候选人失败", "error");
-    console.error("删除候选人错误：", error);
-  }
-}
-
-// 重置所有票数
-async function resetAllVotes() {
-  if (!confirm("确定要重置所有候选人的票数吗？此操作不可恢复！")) {
-    return;
-  }
-
-  try {
-    const { data: candidates, error: candError } = await supabase.from("candidates").select("id");
-    if (candError) throw candError;
-    if (!candidates) return;
-
-    // 批量重置票数
-    for (const candidate of candidates) {
-      const { error } = await supabase.from("candidates").update({ votes: 0 }).eq("id", candidate.id);
-      if (error) throw error;
-    }
-
-    msg("所有票数已重置", "success");
-    renderAdminPanel();
-    renderVoteList();
-  } catch (error) {
-    msg("重置票数失败", "error");
-    console.error("重置票数错误：", error);
-  }
-}
-
-// 导出Excel（CSV格式）
-async function exportExcel() {
-  try {
-    const { data: candidates, error } = await supabase.from("candidates").select("*");
-    if (error) throw error;
-    
-    if (!candidates || candidates.length === 0) {
-      msg("暂无数据可导出", "error");
-      return;
-    }
-
-    // 按票数排序
-    candidates.sort((a, b) => (b.votes || 0) - (a.votes || 0));
-
-    // 构建CSV内容（处理中文编码）
-    let csvContent = "\uFEFF排名,姓名,类别,学院,票数\n";
-    candidates.forEach((item, index) => {
-      csvContent += `${index + 1},${item.name},${item.category},${item.college || '未填写'},${item.votes || 0}\n`;
+    // 构建CSV内容
+    let csvContent = "\uFEFF姓名,类别,学院,票数\n";
+    candidates.forEach(item => {
+      csvContent += `${item.name},${item.category},${item.college},${item.votes || 0}\n`;
     });
 
     // 创建下载链接
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `莞工之星投票结果_${new Date().toLocaleDateString()}.csv`);
-    link.style.display = "none";
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = `莞工之星投票数据_${new Date().toLocaleDateString()}.csv`;
     link.click();
-    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 
-    msg("导出成功", "success");
+    showMsg("数据导出成功", "success");
   } catch (error) {
-    msg("导出失败", "error");
-    console.error("导出错误：", error);
+    console.error("导出数据失败：", error);
+    showMsg("导出失败，请稍后重试", "error");
   }
 }
-
-// 清空所有数据
-async function clearAll() {
-  if (!confirm("警告！此操作会清空所有候选人及投票记录，不可恢复！")) {
-    return;
-  }
-
-  try {
-    // 清空投票记录
-    const { error: recordError } = await supabase.from("records").delete().neq("id", 0);
-    if (recordError) throw recordError;
-    
-    // 清空候选人
-    const { error: candError } = await supabase.from("candidates").delete().neq("id", 0);
-    if (candError) throw candError;
-
-    msg("所有数据已清空", "success");
-    // 刷新页面
-    window.location.reload();
-  } catch (error) {
-    msg("清空数据失败", "error");
-    console.error("清空数据错误：", error);
-  }
-}
-
-// 页面加载完成后初始化
-window.onload = function() {
-  console.log("莞工之星投票系统初始化完成");
-};
 </script>
 </body>
 </html>
