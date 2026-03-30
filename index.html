@@ -12,30 +12,40 @@ body { background:var(--light); padding:15px; }
 .header { text-align:center; padding-bottom:15px; border-bottom:2px solid var(--green); }
 .logo { width:80px; margin-bottom:10px; }
 h1 { color:var(--green); font-size:22px; margin:10px 0 5px; }
-.login-box { margin:20px 0; text-align:center; }
-input { padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; margin:5px; width:180px; }
-button { padding:10px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; background:var(--green); color:white; margin:5px; }
+.login-box { margin:20px 0; text-align:center; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+input { padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; width:220px; }
+button { padding:10px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; background:var(--green); color:white; }
 button:disabled { background:#ccc; cursor:not-allowed; }
 .tab-group { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; justify-content:center; }
 .tab { padding:8px 14px; border:1px solid var(--green); border-radius:20px; background:white; color:var(--green); cursor:pointer; }
 .tab.active { background:var(--green); color:white; }
 .list { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:15px; margin:20px 0; }
-.card { border:1px solid #ddd; border-radius:8px; padding:15px; text-align:center; }
+.card { border:1px solid #ddd; border-radius:8px; padding:15px; text-align:center; display:flex; flex-direction:column; }
+/* 新增：海报图片样式 */
+.card img { width: 100%; height: 280px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; background: #f0f0f0; }
 .card h3 { margin-bottom:6px; font-size:17px; }
-.card p { color:#666; font-size:14px; margin-bottom:8px; }
+.card p { color:#666; font-size:14px; margin-bottom:4px; }
+/* 新增：占比条样式 */
+.stats-box { background: #f8f9fa; border-radius: 6px; padding: 8px; margin: 10px 0; font-size: 12px; color: #555; }
+.progress-bar { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 5px; display: flex; overflow: hidden; }
+.progress-same { background: var(--green); height: 100%; }
+.progress-diff { background: #007bff; height: 100%; }
+
 #status { text-align:center; padding:10px; border-radius:6px; margin:10px 0; display:none; }
 .success { background:#d4edda; color:#155724; }
 .error { background:#f8d7da; color:#721c24; }
 .rank { margin-top:30px; padding-top:20px; border-top:2px solid var(--light); }
 .rank h2 { color:var(--green); text-align:center; margin-bottom:15px; font-size:20px; }
 .rank-item { display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee; }
+.live-badge { background: #dc3545; color: white; font-size: 12px; padding: 2px 6px; border-radius: 10px; vertical-align: middle; margin-left: 8px; animation: pulse 2s infinite; }
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
     <img src="./dgut-logo.png" class="logo" alt="东莞理工学院校徽">
-    <h1>莞工之星 · 投票系统</h1>
+    <h1>莞工之星 · 投票系统 <span class="live-badge">LIVE 实时</span></h1>
     <p>一个姓名只能对应一个学号，每个类别限投1次</p >
   </div>
 
@@ -44,6 +54,7 @@ button:disabled { background:#ccc; cursor:not-allowed; }
   <div class="login-box" id="loginBox">
     <input id="name" placeholder="姓名">
     <input id="stuId" placeholder="学号" type="number">
+    <input id="college" placeholder="你的所属学院 (如: 计算机学院)">
     <button onclick="userLogin()">确认身份</button>
   </div>
 
@@ -73,6 +84,7 @@ const SUPABASE_KEY = "sb_publishable_aXblcIYw2XZGSyMjUuh4mQ_O_eIyChD";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
+let userCollege = null; // 记录当前登录用户的学院
 let nowCat = "all";
 
 function showMsg(text, type) {
@@ -83,12 +95,24 @@ function showMsg(text, type) {
   setTimeout(()=>s.style.display="none",2500);
 }
 
+// 设置实时监听数据库变化 (需在 Supabase 后台开启 Realtime)
+supabaseClient
+  .channel('public:vote_candidates')
+  .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'vote_candidates' }, payload => {
+    // 当接收到数据库票数更新时，静默刷新当前视图
+    if(currentUser) {
+      show(nowCat, true); 
+    }
+  })
+  .subscribe();
+
 async function userLogin() {
   const name = document.getElementById("name").value.trim();
   const stuId = document.getElementById("stuId").value.trim();
-  
-  if (!name || !stuId) {
-    showMsg("请填写完整姓名和学号", "error");
+  const college = document.getElementById("college").value.trim();
+
+  if (!name || !stuId || !college) {
+    showMsg("请填写完整姓名、学号和所属学院", "error");
     return;
   }
 
@@ -114,12 +138,15 @@ async function userLogin() {
       await supabaseClient.from("vote_accounts").insert([{
         name: name,
         stu_id: stuId,
+        college: college, // 存入数据库供后续溯源
         create_time: new Date().toISOString()
       }]);
     }
 
     currentUser = `${name}_${stuId}`;
-    document.getElementById("loginBox").style.display = "none"; // 登录成功隐藏登录框
+    userCollege = college; // 保存到全局变量用于计算是否同学院
+    
+    document.getElementById("loginBox").style.display = "none";
     document.getElementById("voteArea").style.display = "block";
     await show("all");
     showMsg("身份确认成功", "success");
@@ -129,13 +156,16 @@ async function userLogin() {
   }
 }
 
-async function show(cat) {
+// isSilent 用于实时刷新时防止页面产生突兀的加载闪烁
+async function show(cat, isSilent = false) {
   nowCat = cat;
-  document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
-  const activeTab = Array.from(document.querySelectorAll('.tab')).find(btn => 
-    (cat === 'all' && btn.textContent === '全部') || btn.textContent === cat
-  );
-  if (activeTab) activeTab.classList.add('active');
+  if(!isSilent) {
+    document.querySelectorAll('.tab').forEach(btn => btn.classList.remove('active'));
+    const activeTab = Array.from(document.querySelectorAll('.tab')).find(btn => 
+      (cat === 'all' && btn.textContent === '全部') || btn.textContent === cat
+    );
+    if (activeTab) activeTab.classList.add('active');
+  }
 
   try {
     const { data: candidates } = await supabaseClient
@@ -165,14 +195,38 @@ async function show(cat) {
 
     document.getElementById("list").innerHTML = showList.map(i => {
       const voted = userRec[i.category] === i.id;
+      
+      // 计算学院占比
+      const total = i.votes || 0;
+      const sameCount = i.same_college_votes || 0;
+      const diffCount = i.diff_college_votes || 0;
+      const samePct = total > 0 ? ((sameCount / total) * 100).toFixed(1) : 0;
+      const diffPct = total > 0 ? ((diffCount / total) * 100).toFixed(1) : 0;
+
+      // 海报图片字段假设为 image_url，如果没有则显示占位图
+      const imageUrl = i.image_url || `https://via.placeholder.com/300x400/e8f5e9/28a745?text=${encodeURIComponent(i.name)}`;
+
       return `
         <div class="card">
+          <img src="${imageUrl}" alt="${i.name}的海报" loading="lazy">
           <h3>${i.name}</h3>
-          <p>${i.category}</p >
-          <p>${i.college}</p >
-          <p>票数：${i.votes || 0}</p >
-          <button ${voted?"disabled":""} onclick="doVote('${i.id}','${i.category}')">
-            ${voted?"已投":"投票"}
+          <p>分类：${i.category}</p >
+          <p>学院：${i.college}</p >
+          
+          <div class="stats-box">
+             <p style="font-size:14px; color:#333; font-weight:bold; margin-bottom:5px;">当前票数：${total}</p >
+             <div style="display:flex; justify-content:space-between;">
+                <span>同学院: ${samePct}%</span>
+                <span>跨学院: ${diffPct}%</span>
+             </div>
+             <div class="progress-bar">
+                <div class="progress-same" style="width: ${samePct}%"></div>
+                <div class="progress-diff" style="width: ${diffPct}%"></div>
+             </div>
+          </div>
+
+          <button style="margin-top:auto" ${voted?"disabled":""} onclick="doVote('${i.id}','${i.category}', '${i.college}')">
+            ${voted?"已投此类别":"给TA投票"}
           </button>
         </div>
       `;
@@ -181,11 +235,11 @@ async function show(cat) {
     renderRank(candidates);
   } catch (error) {
     console.error("加载候选人失败：", error);
-    showMsg("加载数据失败，请稍后重试", "error");
+    if(!isSilent) showMsg("加载数据失败，请稍后重试", "error");
   }
 }
 
-async function doVote(candidateId, category) {
+async function doVote(candidateId, category, candidateCollege) {
   if (!currentUser) {
     showMsg("请先确认身份", "error");
     return;
@@ -203,6 +257,7 @@ async function doVote(candidateId, category) {
       return;
     }
 
+    // 1. 记录投票行为
     await supabaseClient.from("vote_records").insert([{
       user_key: currentUser,
       candidate_id: candidateId,
@@ -210,20 +265,33 @@ async function doVote(candidateId, category) {
       vote_time: new Date().toISOString()
     }]);
 
+    // 2. 获取当前候选人数据，准备更新票数
     const { data: candidate } = await supabaseClient
       .from("vote_candidates")
-      .select("votes")
+      .select("votes, same_college_votes, diff_college_votes")
       .eq("id", candidateId)
       .single();
 
-    const newVotes = (candidate.votes || 0) + 1;
+    // 3. 判断是否同学院，并更新相关票数池
+    const isSameCollege = (userCollege === candidateCollege);
+    const updateData = { 
+      votes: (candidate.votes || 0) + 1 
+    };
+    
+    if (isSameCollege) {
+      updateData.same_college_votes = (candidate.same_college_votes || 0) + 1;
+    } else {
+      updateData.diff_college_votes = (candidate.diff_college_votes || 0) + 1;
+    }
+
     await supabaseClient
       .from("vote_candidates")
-      .update({ votes: newVotes })
+      .update(updateData)
       .eq("id", candidateId);
 
     showMsg("投票成功！", "success");
-    await show(nowCat);
+    // 不需要手动调用 show(nowCat)，因为 Realtime 监听到 updateData 后会自动触发刷新
+    
   } catch (error) {
     console.error("投票失败：", error);
     showMsg("投票失败，请稍后重试", "error");
@@ -236,10 +304,12 @@ function renderRank(candidates) {
     return;
   }
   const sortedList = [...candidates].sort((a,b)=>(b.votes||0)-(a.votes||0));
-  document.getElementById("rankList").innerHTML = sortedList.map((i,k)=>`
+  
+  // 取前10名作为排行榜展示
+  document.getElementById("rankList").innerHTML = sortedList.slice(0, 10).map((i,k)=>`
     <div class="rank-item">
-      <span>${k+1}. ${i.name}（${i.category}）</span>
-      <span>${i.votes||0} 票</span>
+      <span>${k===0?'🥇':k===1?'🥈':k===2?'🥉':k+1+'.'} ${i.name} （${i.category}）</span>
+      <span style="font-weight:bold; color:var(--green)">${i.votes||0} 票</span>
     </div>
   `).join("");
 }
