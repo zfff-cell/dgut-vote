@@ -8,12 +8,14 @@
 :root { --green:#28a745; --light:#e8f5e9; --dark:#1e7e34; --red:#dc3545; --blue:#007bff; --yellow:#ffc107; }
 * { box-sizing:border-box; margin:0; padding:0; font-family:"Microsoft YaHei",sans-serif; }
 body { background:#f4f6f9; padding:20px; }
-.container { max-width:900px; margin:0 auto; background:white; padding:30px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+.container { max-width:1000px; margin:0 auto; background:white; padding:30px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
 h1 { color:#333; text-align:center; margin-bottom:20px; font-size:24px; border-bottom:2px solid var(--green); padding-bottom:15px; }
 .login-box { text-align:center; margin:40px 0; }
 input, select { padding:10px; font-size:14px; border-radius:6px; border:1px solid #ccc; margin:5px; width:180px; }
+input[type="file"] { padding: 7px; background: white; }
 button { padding:8px 15px; border:none; border-radius:6px; font-size:14px; cursor:pointer; background:var(--green); color:white; margin:5px; transition: 0.2s; }
 button:hover { opacity: 0.8; }
+button:disabled { background: #ccc; cursor: not-allowed; }
 #status { text-align:center; padding:10px; border-radius:6px; margin:10px 0; display:none; }
 .success { background:#d4edda; color:#155724; }
 .error { background:#f8d7da; color:#721c24; }
@@ -24,7 +26,7 @@ button:hover { opacity: 0.8; }
 
 /* 表格样式 */
 table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
-th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 12px 8px; text-align: center; font-size: 14px; vertical-align: middle; }
 th { background: var(--light); color: var(--dark); }
 tr:hover { background-color: #f1f1f1; }
 .action-btn { padding: 5px 10px; margin: 2px; font-size: 12px; }
@@ -33,11 +35,16 @@ tr:hover { background-color: #f1f1f1; }
 .del-btn { background: var(--red); }
 .export-btn { background: var(--dark); }
 
+.thumb-img { width: 50px; height: 65px; object-fit: cover; border-radius: 4px; background: #eee; }
+.preview-img { width: 120px; height: 160px; object-fit: cover; border-radius: 6px; margin: 10px auto; display: block; background: #eee; }
+
 /* 弹窗样式 */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; }
-.modal-content { background: #fff; width: 400px; margin: 100px auto; padding: 25px; border-radius: 8px; text-align: center; }
+.modal-content { background: #fff; width: 450px; margin: 50px auto; padding: 25px; border-radius: 8px; text-align: center; max-height: 90vh; overflow-y: auto; }
 .modal-content h3 { margin-bottom: 15px; color: var(--dark); }
-.modal-content input, .modal-content select { width: 90%; margin-bottom: 15px; }
+.modal-content input, .modal-content select { width: 90%; margin-bottom: 10px; }
+.input-group { text-align: left; width: 90%; margin: 0 auto 10px auto; }
+.input-group label { display: block; font-size: 12px; color: #666; margin-bottom: 3px; }
 </style>
 </head>
 <body>
@@ -46,14 +53,12 @@ tr:hover { background-color: #f1f1f1; }
   <h1>🗳️ 投票系统 - 管理员后台</h1>
   <div id="status"></div>
 
-  <!-- 登录区域 -->
   <div class="login-box" id="adminLoginBox">
     <p style="margin-bottom:15px; color:#666;">请输入管理员口令进入后台</p >
     <input type="password" id="adminPwd" placeholder="管理员密码">
     <button onclick="loginAdmin()">登 入</button>
   </div>
 
-  <!-- 后台操作区域（默认隐藏） -->
   <div id="adminPanel" style="display:none;">
     
     <div class="admin-section">
@@ -68,7 +73,8 @@ tr:hover { background-color: #f1f1f1; }
           <option>文体之星</option>
         </select>
         <input id="ccol" placeholder="学院">
-        <button onclick="addCandidate()">确认添加</button>
+        <input type="file" id="cimage" accept="image/*" title="上传海报照片">
+        <button id="addBtn" onclick="addCandidate()">确认添加</button>
       </div>
     </div>
 
@@ -77,22 +83,24 @@ tr:hover { background-color: #f1f1f1; }
         <span>📊 实时数据与管理</span>
         <div>
           <button class="export-btn" onclick="loadData()">刷新数据</button>
-          <button class="export-btn" onclick="exportVoteData()">📥 导出CSV</button>
+          <button class="export-btn" onclick="exportVoteData()">📥 导出完整数据(CSV)</button>
         </div>
       </h2>
       <div style="overflow-x: auto;">
         <table>
           <thead>
             <tr>
+              <th style="width: 70px;">海报</th>
               <th>姓名</th>
               <th>类别</th>
               <th>学院</th>
-              <th>当前票数</th>
-              <th style="min-width: 220px;">操作</th>
+              <th>同院/跨院票</th>
+              <th>总票数</th>
+              <th style="min-width: 200px;">操作</th>
             </tr>
           </thead>
           <tbody id="dataTableBody">
-            <tr><td colspan="5" style="padding: 20px; color: #666;">加载中...</td></tr>
+            <tr><td colspan="7" style="padding: 20px; color: #666;">加载中...</td></tr>
           </tbody>
         </table>
       </div>
@@ -101,22 +109,41 @@ tr:hover { background-color: #f1f1f1; }
   </div>
 </div>
 
-<!-- 修改信息弹窗 -->
 <div id="editModal" class="modal">
   <div class="modal-content">
     <h3>修改候选人信息</h3>
     <input type="hidden" id="editId">
-    <input id="editName" placeholder="候选人姓名">
-    <select id="editCat">
-      <option>自强之星</option>
-      <option>志愿之星</option>
-      <option>团队之星</option>
-      <option>学术之星</option>
-      <option>文体之星</option>
-    </select>
-    <input id="editCol" placeholder="学院">
-    <div style="margin-top: 15px;">
-      <button class="export-btn" onclick="saveEdit()">保存修改</button>
+    <input type="hidden" id="existingImageUrl">
+    
+    <div class="input-group">
+      <label>当前海报 (留空则不修改图片)</label>
+      <img id="editImgPreview" class="preview-img" src="" alt="预览图">
+      <input type="file" id="editImage" accept="image/*">
+    </div>
+
+    <div class="input-group">
+      <label>候选人姓名</label>
+      <input id="editName" placeholder="候选人姓名">
+    </div>
+    
+    <div class="input-group">
+      <label>参选类别</label>
+      <select id="editCat">
+        <option>自强之星</option>
+        <option>志愿之星</option>
+        <option>团队之星</option>
+        <option>学术之星</option>
+        <option>文体之星</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label>所属学院</label>
+      <input id="editCol" placeholder="学院">
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button id="saveBtn" class="export-btn" onclick="saveEdit()">保存修改</button>
       <button style="background: #ccc; color: #333;" onclick="closeModal()">取消</button>
     </div>
   </div>
@@ -148,7 +175,33 @@ function loginAdmin() {
   document.getElementById("adminLoginBox").style.display = "none";
   document.getElementById("adminPanel").style.display = "block";
   showMsg("登入成功，正在拉取实时数据...", "success");
-  loadData(); // 登录成功后立刻加载表格数据
+  loadData();
+}
+
+// 上传图片到 Supabase Storage
+async function uploadImage(fileEleId) {
+  const fileInput = document.getElementById(fileEleId);
+  const file = fileInput.files[0];
+  if (!file) return null;
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+  
+  // 'posters' 是我们在 Supabase 创建的存储桶名称
+  const { data, error } = await supabaseClient.storage
+    .from('posters')
+    .upload(fileName, file);
+
+  if (error) {
+    console.error("图片上传失败:", error);
+    throw new Error("图片上传失败");
+  }
+
+  const { data: publicUrlData } = supabaseClient.storage
+    .from('posters')
+    .getPublicUrl(fileName);
+
+  return publicUrlData.publicUrl;
 }
 
 // 加载实时数据表格
@@ -164,34 +217,42 @@ async function loadData() {
 
     const tbody = document.getElementById("dataTableBody");
     if (!candidates || candidates.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" style="padding: 20px; color: #666;">暂无候选人数据</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="padding: 20px; color: #666;">暂无候选人数据</td></tr>';
       return;
     }
 
-    tbody.innerHTML = candidates.map(i => `
+    tbody.innerHTML = candidates.map(i => {
+      const imgUrl = i.image_url || `https://via.placeholder.com/150x200/e8f5e9/28a745?text=${encodeURIComponent(i.name)}`;
+      return `
       <tr>
+        <td><img src="${imgUrl}" class="thumb-img" alt="海报"></td>
         <td><strong>${i.name}</strong></td>
         <td>${i.category}</td>
         <td>${i.college}</td>
-        <td style="color:var(--dark); font-weight:bold;">${i.votes || 0}</td>
+        <td style="font-size: 12px; color: #555;">
+          同院: <span style="color:var(--green)">${i.same_college_votes || 0}</span><br>
+          跨院: <span style="color:var(--blue)">${i.diff_college_votes || 0}</span>
+        </td>
+        <td style="color:var(--dark); font-weight:bold; font-size:16px;">${i.votes || 0}</td>
         <td>
-          <button class="action-btn edit-btn" onclick="openModal('${i.id}', '${i.name}', '${i.category}', '${i.college}')">修改</button>
-          <button class="action-btn clear-btn" onclick="clearVotes('${i.id}', '${i.name}')">清空票数</button>
+          <button class="action-btn edit-btn" onclick="openModal('${i.id}', '${i.name}', '${i.category}', '${i.college}', '${i.image_url || ''}')">修改</button>
+          <button class="action-btn clear-btn" onclick="clearVotes('${i.id}', '${i.name}')">清空票</button>
           <button class="action-btn del-btn" onclick="deleteCandidate('${i.id}', '${i.name}')">删除</button>
         </td>
       </tr>
-    `).join("");
+    `}).join("");
   } catch (error) {
     console.error("加载数据失败：", error);
     showMsg("加载数据失败", "error");
   }
 }
 
-// 添加候选人
+// 修复后的添加候选人功能
 async function addCandidate() {
   const name = document.getElementById("cname").value.trim();
   const category = document.getElementById("ccat").value;
   const college = document.getElementById("ccol").value.trim();
+  const btn = document.getElementById("addBtn");
 
   if (!name || !college) {
     showMsg("请填写完整的候选人姓名和学院", "error");
@@ -199,31 +260,93 @@ async function addCandidate() {
   }
 
   try {
-    const id = Date.now().toString(); 
-    await supabaseClient.from("vote_candidates").insert([{
-      id: id, name: name, category: category, college: college, votes: 0, create_time: new Date().toISOString()
+    btn.disabled = true;
+    btn.innerText = "上传中...";
+    showMsg("正在处理数据，请稍候...", "success");
+
+    let finalImageUrl = await uploadImage("cimage");
+
+    const id = Date.now().toString();
+    
+    // 🚨 重点修改：增加了 { error } 拦截
+    const { error } = await supabaseClient.from("vote_candidates").insert([{
+      id: id, 
+      name: name, 
+      category: category, 
+      college: college, 
+      image_url: finalImageUrl, // 这里存的必须是 https://... 的直链
+      votes: 0, 
+      same_college_votes: 0,
+      diff_college_votes: 0,
+      create_time: new Date().toISOString()
     }]);
+
+    // 如果数据库拒绝写入，立刻抛出错误，终止下面的“成功”提示
+    if (error) throw error; 
 
     showMsg(`✅ 已成功添加：${name}`, "success");
     document.getElementById("cname").value = "";
     document.getElementById("ccol").value = "";
-    loadData(); // 刷新表格
+    document.getElementById("cimage").value = ""; 
+    loadData();
   } catch (error) {
     console.error("添加失败：", error);
-    showMsg("添加失败", "error");
+    // 明确显示后端的报错信息
+    showMsg(`添加失败: ${error.message || "请检查数据库字段是否补齐"}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "确认添加";
+  }
+}
+
+// 修复后的保存修改功能
+async function saveEdit() {
+  const id = document.getElementById("editId").value;
+  const name = document.getElementById("editName").value.trim();
+  const category = document.getElementById("editCat").value;
+  const college = document.getElementById("editCol").value.trim();
+  const existingImageUrl = document.getElementById("existingImageUrl").value;
+  const btn = document.getElementById("saveBtn");
+
+  if (!name || !college) {
+    alert("姓名和学院不能为空"); return;
+  }
+
+  try {
+    btn.disabled = true;
+    btn.innerText = "保存中...";
+
+    let newImageUrl = await uploadImage("editImage");
+    let finalImageUrl = newImageUrl ? newImageUrl : existingImageUrl;
+
+    // 🚨 同样增加 { error } 拦截
+    const { error } = await supabaseClient.from("vote_candidates").update({
+      name: name, 
+      category: category, 
+      college: college,
+      image_url: finalImageUrl
+    }).eq("id", id);
+
+    if (error) throw error;
+
+    showMsg(`✅ 信息修改成功`, "success");
+    closeModal();
+    loadData();
+  } catch (error) {
+    console.error("修改失败：", error);
+    showMsg(`修改失败: ${error.message}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "保存修改";
   }
 }
 
 // 清空单人票数
 async function clearVotes(id, name) {
-  if(!confirm(`⚠️ 警告：确定要清空【${name}】的票数吗？此操作不可恢复！\n（注意：这也会清除相关的投票记录，以便学生可以重新投票）`)) return;
-  
+  if(!confirm(`⚠️ 警告：确定要清空【${name}】的票数吗？此操作不可恢复！\n（这也会清除相关的历史投票记录）`)) return;
   try {
-    // 1. 将票数归零
-    await supabaseClient.from("vote_candidates").update({ votes: 0 }).eq("id", id);
-    // 2. 清除记录表中投给该候选人的历史（可选，如果你希望学生能重投就必须加这句）
+    await supabaseClient.from("vote_candidates").update({ votes: 0, same_college_votes: 0, diff_college_votes: 0 }).eq("id", id);
     await supabaseClient.from("vote_records").delete().eq("candidate_id", id);
-    
     showMsg(`✅ 已清空 ${name} 的票数`, "success");
     loadData();
   } catch (error) {
@@ -234,13 +357,10 @@ async function clearVotes(id, name) {
 
 // 删除候选人
 async function deleteCandidate(id, name) {
-  if(!confirm(`❌ 危险操作：确定要彻底删除候选人【${name}】吗？与其相关的投票记录也会一并失效！`)) return;
-
+  if(!confirm(`❌ 危险操作：确定要彻底删除候选人【${name}】吗？`)) return;
   try {
-    // 建议在Supabase数据库设置外键级联删除，或者在此处手动删记录
     await supabaseClient.from("vote_records").delete().eq("candidate_id", id);
     await supabaseClient.from("vote_candidates").delete().eq("id", id);
-    
     showMsg(`🗑️ 已删除候选人 ${name}`, "success");
     loadData();
   } catch (error) {
@@ -249,12 +369,21 @@ async function deleteCandidate(id, name) {
   }
 }
 
-// 打开修改弹窗
-function openModal(id, name, cat, col) {
+// 打开修改弹窗 (带照片预览)
+function openModal(id, name, cat, col, imageUrl) {
   document.getElementById("editId").value = id;
   document.getElementById("editName").value = name;
   document.getElementById("editCat").value = cat;
   document.getElementById("editCol").value = col;
+  document.getElementById("existingImageUrl").value = imageUrl;
+  
+  // 渲染预览图
+  const previewImg = document.getElementById("editImgPreview");
+  previewImg.src = imageUrl || `https://via.placeholder.com/150x200/e8f5e9/28a745?text=${encodeURIComponent(name)}`;
+  
+  // 清空文件输入框，防止遗留上次的修改
+  document.getElementById("editImage").value = "";
+
   document.getElementById("editModal").style.display = "block";
 }
 
@@ -263,32 +392,102 @@ function closeModal() {
   document.getElementById("editModal").style.display = "none";
 }
 
-// 保存修改
+// 修复后的添加候选人功能
+async function addCandidate() {
+  const name = document.getElementById("cname").value.trim();
+  const category = document.getElementById("ccat").value;
+  const college = document.getElementById("ccol").value.trim();
+  const btn = document.getElementById("addBtn");
+
+  if (!name || !college) {
+    showMsg("请填写完整的候选人姓名和学院", "error");
+    return;
+  }
+
+  try {
+    btn.disabled = true;
+    btn.innerText = "上传中...";
+    showMsg("正在处理数据，请稍候...", "success");
+
+    let finalImageUrl = await uploadImage("cimage");
+
+    const id = Date.now().toString();
+    
+    // 🚨 重点修改：增加了 { error } 拦截
+    const { error } = await supabaseClient.from("vote_candidates").insert([{
+      id: id, 
+      name: name, 
+      category: category, 
+      college: college, 
+      image_url: finalImageUrl, // 这里存的必须是 https://... 的直链
+      votes: 0, 
+      same_college_votes: 0,
+      diff_college_votes: 0,
+      create_time: new Date().toISOString()
+    }]);
+
+    // 如果数据库拒绝写入，立刻抛出错误，终止下面的“成功”提示
+    if (error) throw error; 
+
+    showMsg(`✅ 已成功添加：${name}`, "success");
+    document.getElementById("cname").value = "";
+    document.getElementById("ccol").value = "";
+    document.getElementById("cimage").value = ""; 
+    loadData();
+  } catch (error) {
+    console.error("添加失败：", error);
+    // 明确显示后端的报错信息
+    showMsg(`添加失败: ${error.message || "请检查数据库字段是否补齐"}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "确认添加";
+  }
+}
+
+// 修复后的保存修改功能
 async function saveEdit() {
   const id = document.getElementById("editId").value;
   const name = document.getElementById("editName").value.trim();
   const category = document.getElementById("editCat").value;
   const college = document.getElementById("editCol").value.trim();
+  const existingImageUrl = document.getElementById("existingImageUrl").value;
+  const btn = document.getElementById("saveBtn");
 
   if (!name || !college) {
     alert("姓名和学院不能为空"); return;
   }
 
   try {
-    await supabaseClient.from("vote_candidates").update({
-      name: name, category: category, college: college
+    btn.disabled = true;
+    btn.innerText = "保存中...";
+
+    let newImageUrl = await uploadImage("editImage");
+    let finalImageUrl = newImageUrl ? newImageUrl : existingImageUrl;
+
+    // 🚨 同样增加 { error } 拦截
+    const { error } = await supabaseClient.from("vote_candidates").update({
+      name: name, 
+      category: category, 
+      college: college,
+      image_url: finalImageUrl
     }).eq("id", id);
-    
+
+    if (error) throw error;
+
     showMsg(`✅ 信息修改成功`, "success");
     closeModal();
     loadData();
   } catch (error) {
     console.error("修改失败：", error);
-    showMsg("修改失败", "error");
+    showMsg(`修改失败: ${error.message}`, "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "保存修改";
   }
 }
 
-// 导出数据
+
+// 导出数据 (增加占比字段)
 async function exportVoteData() {
   try {
     const { data: candidates } = await supabaseClient
@@ -300,16 +499,17 @@ async function exportVoteData() {
       showMsg("暂无数据可导出", "error"); return;
     }
 
-    let csvContent = "\uFEFF姓名,类别,学院,当前票数\n";
+    // 增加同院和跨院的票数导出
+    let csvContent = "\uFEFF姓名,类别,学院,同院票数,跨院票数,总票数\n";
     candidates.forEach(item => {
-      csvContent += `${item.name},${item.category},${item.college},${item.votes || 0}\n`;
+      csvContent += `${item.name},${item.category},${item.college},${item.same_college_votes || 0},${item.diff_college_votes || 0},${item.votes || 0}\n`;
     });
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `莞工之星_实时得票_${new Date().toLocaleDateString()}.csv`;
+    link.download = `莞工之星_详尽得票数据_${new Date().toLocaleDateString()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
 
